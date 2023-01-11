@@ -55,41 +55,6 @@ def DebugTest(msg, filenameFull):
     REMSGUtil.searchAttrTy(msg, filenameFull, -1)
     REMSGUtil.searchSameGuid(msg, filenameFull)
 
-def worker(item, mode = "csv", modFile: str = None, lang : int = REMSGUtil.SHORT_LANG_LU["ja"], attrSum=""):
-    try:
-        filenameFull = os.path.abspath(item)
-        print("processing:"+filenameFull)
-        
-        msg = REMSGUtil.importMSG(filenameFull)
-        # DebugTest(msg,filenameFull)
-        
-        if mode == "csv":
-            if modFile is None:
-                REMSGUtil.exportCSV(msg, filenameFull+'.'+mode)
-            else:
-                REMSGUtil.exportMSG(msg=REMSGUtil.importCSV(msg, modFile), filename=filenameFull+'.new')
-
-        elif mode == "txt":
-            if modFile is None:
-                REMSGUtil.exportTXT(msg, filenameFull+'.'+mode, lang)
-            else:
-                REMSGUtil.exportMSG(msg=REMSGUtil.importTXT(msg, modFile, lang), filename=filenameFull+'.new')
-
-        elif mode == "json":
-            if modFile is None:
-                REMSGUtil.exportJson(msg, filenameFull+'.'+mode)
-            else:
-                REMSGUtil.exportMSG(msg=REMSGUtil.importJson(msg, modFile), filename=filenameFull+'.new')
-
-        elif mode == "dump":
-            REMSGUtil.exportMHRTextDump(msg, filenameFull+'.txt')
-
-
-    except Exception as e:
-        print(f'error with file {item}')
-        # print(traceback.format_exc())
-        logger.exception(e)
-
 def isValidMsgName(name: str) -> bool:
     return ".msg" in name.lower() and \
         not name.lower().endswith(".txt") and \
@@ -126,6 +91,41 @@ def fillList(path: str, filetype = 'msg'):
                 return []
     else:
         return []
+
+def worker(item, mode = "csv", modFile: str = None, lang : int = REMSGUtil.SHORT_LANG_LU["ja"], attrSum=""):
+    try:
+        filenameFull = os.path.abspath(item)
+        print("processing:"+filenameFull)
+        
+        msg = REMSGUtil.importMSG(filenameFull)
+        # DebugTest(msg,filenameFull)
+        
+        if mode == "csv":
+            if modFile is None:
+                REMSGUtil.exportCSV(msg, filenameFull+'.'+mode)
+            else:
+                REMSGUtil.exportMSG(msg=REMSGUtil.importCSV(msg, modFile), filename=filenameFull+'.new')
+
+        elif mode == "txt":
+            if modFile is None:
+                REMSGUtil.exportTXT(msg, filenameFull+'.'+mode, lang)
+            else:
+                REMSGUtil.exportMSG(msg=REMSGUtil.importTXT(msg, modFile, lang), filename=filenameFull+'.new')
+
+        elif mode == "json":
+            if modFile is None:
+                REMSGUtil.exportJson(msg, filenameFull+'.'+mode)
+            else:
+                REMSGUtil.exportMSG(msg=REMSGUtil.importJson(msg, modFile), filename=filenameFull+'.new')
+
+        elif mode == "dump":
+            REMSGUtil.exportMHRTextDump(msg, filenameFull+'.txt')
+
+
+    except Exception as e:
+        print(f'error with file {item}')
+        # print(traceback.format_exc())
+        logger.exception(e)
 
 def main():
     parser = argparse.ArgumentParser(
