@@ -75,11 +75,16 @@ def wcharPool2StrPool(wcharPool: bytes) -> str:
     return stringPool
 
 
+def forceWindowsLineBreak(string: str) -> str:
+    """Force /r/n for every linebreak"""
+    return string.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+    
+
 def calcStrPoolOffsets(stringlist: list[str]) -> dict[str, int]:
     """build a offset dict with {string : offset}"""
     newDict = dict()
     sizeCount = 0
-    for string in sorted(set([s.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n") for s in stringlist])):
+    for string in sorted(set(stringlist)):
         # not adding null terminator here, it will done by toWcharBytes()
         newDict[string] = sizeCount
         sizeCount = sizeCount + len(string) * 2 + 2

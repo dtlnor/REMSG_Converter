@@ -53,6 +53,7 @@ def searchSameGuid(msg: MSG):
         else:
             print(str(entry.guid)+":"+entry.name)
 
+
 def searchGuid(msg: MSG, guid: uuid.UUID):
     """research use, print out the entry name with that guid"""
     for entry in msg.entrys:
@@ -188,13 +189,13 @@ def importCSV(msgObj: MSG, filename: str, version: int = None, langCount: int = 
             attributes.append(value)
 
         entry.buildEntry(
-            fEntry[guididx],
-            int(fEntry[crcidx]),
-            fEntry[nameidx],
-            attributes,
-            [fEntry[i] for i in langidxs],
-            hash=mmh3.hash(key = fEntry[nameidx].encode('utf-16-le'), seed = -1, signed = False) if version > 15 else None,
-            index=i if version <= 15 else None)
+            guid = fEntry[guididx],
+            crc = int(fEntry[crcidx]),
+            name = fEntry[nameidx],
+            attributeValues = attributes,
+            langs = [helper.forceWindowsLineBreak(fEntry[i]) for i in langidxs],
+            hash = mmh3.hash(key = fEntry[nameidx].encode('utf-16-le'), seed = -1, signed = False) if version > 15 else None,
+            index = i if version <= 15 else None)
         
         # not gonna check, left it to user
         # if entry.guid in oldEntrys.keys():
@@ -325,7 +326,7 @@ def importJson(msgObj: MSG, filename: str):
             name=jEntry["name"],
             attributeValues=list([ readAttributeFromStr(next(iter(attr.values())), msg.attributeHeaders[i]["valueType"])
                                     for i, attr in enumerate(jEntry["attributes"])]),
-            langs=list([ content for content in jEntry["content"] ]),
+            langs=list([ helper.forceWindowsLineBreak(content) for content in jEntry["content"] ]),
             hash=mmh3.hash(key = jEntry["name"].encode('utf-16-le'), seed = -1, signed = False) if msg.version > 15 else None,
             index = jIndex if msg.version <= 15 else None
         )

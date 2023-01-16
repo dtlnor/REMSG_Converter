@@ -419,7 +419,7 @@ class MSG:
             stringPoolSet.update([entry.langs[lang] for lang in self.languages])
             stringPoolSet.update([entry.attributes[idx] for idx in isStrAttrIdx])
 
-        strOffsetDict = helper.calcStrPoolOffsets(stringPoolSet) # remove duplicate and make sure \n is \r\n
+        strOffsetDict = helper.calcStrPoolOffsets(stringPoolSet) # not doing string processing here, as it will change the key.
         # debug use, to let input output stringpool keeps same
         # strOffsetDict = dict((v,k) for k,v in self.stringDict.items()) 
         wcharPool = b''.join(helper.toWcharBytes(x) for x in strOffsetDict.keys())
