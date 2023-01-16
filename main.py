@@ -145,22 +145,17 @@ def main():
     filenameList = []
     editList = []
 
+    editMode = args.edit is not None
+
     if args.input is not None:
         filenameList = fillList(args.input)
         if args.edit is not None:
-            if args.mode is None:
-                input('\nmissing mode arg, press enter to exit...')
-                sys.exit(1)
-
             editList = fillList(args.edit, args.mode)
 
     elif args.edit is not None: # input is none
-        if args.mode is None:
-            input('\nmissing mode arg, press enter to exit...')
-            sys.exit(1)
-
         filenameList = []
         editList = fillList(args.edit, args.mode)
+        # fill file list by edit list
         for file in list(editList):
             filename, file_extension = os.path.splitext(file)
             if os.path.exists(filename):
@@ -187,10 +182,6 @@ def main():
             filenameList = fillList(remainder[0])
 
         elif len(remainder) == 2:
-            if args.mode is None:
-                input('\nmissing mode arg, press enter to exit...')
-                sys.exit(1)
-            
             msgList1 = fillList(remainder[0], 'msg')
             msgList2 = fillList(remainder[1], 'msg')
             editList1 = fillList(remainder[0], args.mode)
@@ -199,12 +190,16 @@ def main():
             filenameList = max([msgList1, msgList2], key=len)
             editList = max([editList1, editList2], key=len)
 
+            editMode = True
+
+    # after getting file list...
     if len(editList) <= 0:
         editList = list([None for _ in filenameList])
     elif len(editList) > 1:
         editfolder, name = os.path.split(editList[0])
         editList = []
         editFiles = dict([(f.lower(), f) for f in os.listdir(editfolder)])
+        # find valid file - edit pair
         for file in list(filenameList):
             msgfolder, name = os.path.split(file)
             if (name+'.'+args.mode).lower() in editFiles:
@@ -212,6 +207,10 @@ def main():
             else:
                 print(f"{name}.{args.mode} not found, skiping this file...")
                 filenameList.remove(file)
+
+    if editMode and (len(editList) <= 0 or None in editList):
+        print(f"{args.mode} mode with edit file/folder input but no {args.mode} file found.")
+        sys.exit(1)
 
     executor = concurrent.futures.ProcessPoolExecutor(args.multiprocess)
     futures = [executor.submit(worker, file, mode = args.mode, modFile = edit, lang = REMSGUtil.SHORT_LANG_LU[args.lang]) for file, edit in zip(filenameList, editList)]
