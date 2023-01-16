@@ -208,6 +208,10 @@ def main():
                 print(f"{name}.{args.mode} not found, skiping this file...")
                 filenameList.remove(file)
 
+    if len(filenameList) <= 0:
+        print(f"No valid input file, exiting.")
+        sys.exit(1)
+    
     if editMode and (len(editList) <= 0 or None in editList):
         print(f"{args.mode} mode with edit file/folder input but no {args.mode} file found.")
         sys.exit(1)
