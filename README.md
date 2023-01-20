@@ -2,7 +2,7 @@
  
  Python library for converting from RE engine msg text file to json/csv/txt and back.
  
-# Desciption
+# Description
  For txt, I let it stay similar format to the msg tool. That means one lang one txt file.
  
  For csv, I put all the languages into one file, with the msg entry name, its guid, and attributes.  
