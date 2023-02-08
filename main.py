@@ -175,6 +175,7 @@ def main():
 
             # debug script input
             # filenameList = getAllFileFromFolder(r"C:\MyProgram\REText\msgFiles")
+            # args.mode = "dump"
             # filenameList = [r"C:\MyProgram\REText\msgFiles\nid004.msg.539100710",]
 
         # guessing input... why am I doing this

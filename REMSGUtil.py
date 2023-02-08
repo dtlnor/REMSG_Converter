@@ -252,7 +252,7 @@ def exportMHRTextDump(msg: MSG, filename: str):
             except:
                 pass
 
-        outputPath = os.path.join(folder, LANG_LIST.get(lang,f"lang_{lang}"), file + ".txt")
+        outputPath = os.path.join(folder, LANG_LIST.get(lang,f"lang_{lang}"), file)
         exportTXT(msg, outputPath, lang)
 
 
