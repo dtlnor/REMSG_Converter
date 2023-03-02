@@ -26,6 +26,14 @@ drag .msg.* file/folder to `msg2{csv/json/txt}.bat`
 ## Convert msg to json / txt / csv
 drag .csv/.json/.txt file/folder **AND** .msg.* file/folder to `{csv/json/txt}+msg2msg.bat`
 
+## Use as python module
+```py
+# use case could be find at main.py. under DebugTest() or worker()
+import REMSGUtil
+msg = REMSGUtil.importMSG("abcd.msg.123456") # get MSG object as msg
+REMSGUtil.exportMSG(msg, "efgh.msg.123456") # export as msg file
+REMSGUtil.exportCSV(msg, "abcd.msg.123456") # export as csv file
+```
 # Credits
 * wwylele's [mhrice](https://github.com/wwylele/mhrice), for file structure.
 * ponaromixxx's [msg tool](https://zenhax.com/viewtopic.php?f=12&t=13337), for file structure.
