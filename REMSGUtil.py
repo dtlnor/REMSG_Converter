@@ -67,8 +67,10 @@ def getEncoding(filename: str, bufferSize: int = 256*1024) -> str:
     result = chardet.detect(rawdata)
     encode = result['encoding']
     confidence = result['confidence']
-    if encode is None or "ascii" == encode.lower() or (confidence < 0.9 and 'utf' not in encode.lower()):
+    if encode is None or "ascii" == encode.lower() or (confidence < 0.75 and 'utf' not in encode.lower()):
         encode = 'utf-8'
+    if encode.lower() == 'utf-8':
+        encode = 'utf-8-sig'
     return encode
 
 
@@ -222,7 +224,7 @@ def importCSV(msgObj: MSG, filename: str, version: int = None, langCount: int = 
 def exportTXT(msg: MSG, filename: str, lang: int):
     """write txt file from MSG object with specified language"""
 
-    with io.open(filename, "w", encoding="utf-8-sig") as txtf:
+    with io.open(filename, "w", encoding="utf-8") as txtf:
         txtf.writelines(['<string>'+entry.langs[lang].replace('\r\n','<lf>')+'\n' for entry in msg.entrys])
 
 
