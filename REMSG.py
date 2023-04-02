@@ -102,14 +102,26 @@ MHR_SUPPORTED_LANG : Final[list[int]] = [
 
 VERSION_2_LANG_COUNT : Final[dict[int,int]] = {
     12 : 23,
+    0x2022033D : 27,
     14 : 28,
     15 : 30,
     17 : 32,
     20 : 33,
     0x20220626 : 33, # before 13.0.0, 0x20220626 has 32 lang count
+    22 : 33,
 }
 """lang count in each msg version.
 0x20220626 has 32 lang count in early version"""
+
+
+def isVersionEncrypt(version: int) -> bool:
+    """check if dataOffset exist"""
+    return (version > 12 and version != 0x2022033D)
+
+
+def isVersionEntryByHash(version: int) -> bool:
+    """check if Entry haed index by hash"""
+    return (version > 15 and version != 0x2022033D)
 
 
 class Entry:
@@ -124,7 +136,7 @@ class Entry:
         self.guid = uuid.UUID(bytes_le=struct.unpack("<16s", filestream.read(16))[0],)
         self.crc, = struct.unpack("<I", filestream.read(4))
         # actually I don't have a version 16 msg file so idk if 16 use hash or index
-        if (self.version > 15):
+        if isVersionEntryByHash(self.version):
             self.hash, = struct.unpack("<I", filestream.read(4))
         else:
             self.index, = struct.unpack("<I", filestream.read(4))
@@ -140,7 +152,7 @@ class Entry:
         """extend the bytearray by filling entry head"""
         bytestream.extend(struct.pack("<16s", self.guid.bytes_le))
         bytestream.extend(struct.pack("<I", self.crc))
-        if (self.version > 15):
+        if isVersionEntryByHash(self.version):
             bytestream.extend(struct.pack("<I", self.hash))
         else:
             bytestream.extend(struct.pack("<I", self.index))
@@ -200,7 +212,7 @@ class Entry:
         """use for file modification"""
         self.guid = uuid.UUID(hex=guid)
         self.crc = crc
-        if (self.version > 15):
+        if isVersionEntryByHash(self.version):
             self.hash = hash
         else:
             self.index = index
@@ -229,7 +241,7 @@ class MSG:
         attributeCount, = struct.unpack("<I", filestream.read(4))
         langCount, = struct.unpack("<I", filestream.read(4))
         seek_align_up(filestream, 8)   # pad to 8
-        if version > 12:
+        if isVersionEncrypt(version):
             dataOffset, = struct.unpack("<Q", filestream.read(8))
         unknDataOffset, = struct.unpack("<Q", filestream.read(8))
         langOffset, = struct.unpack("<Q", filestream.read(8))
@@ -286,7 +298,7 @@ class MSG:
             entry.readAttributes(filestream, attributeHeaders)
         
         # read / decrypt string pool
-        if (version > 12):
+        if isVersionEncrypt(version):
             assert dataOffset == filestream.tell(), f"expected dataOffset at {dataOffset} but at {filestream.tell()}"
         else:
             dataOffset = filestream.tell()
@@ -295,7 +307,7 @@ class MSG:
         assert dataSize % 2 == 0, f"wstring pool size should be even: {dataSize}"
         filestream.seek(dataOffset) # start of string pool
         data = filestream.read(dataSize)
-        if (version > 12):
+        if isVersionEncrypt(version):
             wcharPool = helper.decrypt(data)
         else:
             wcharPool = data
@@ -309,7 +321,7 @@ class MSG:
         for entryIndex, entry in enumerate(entrys):
             # set entry name
             entry.setName(helper.seekString((entry.entryNameOffset - dataOffset), stringDict))
-            if (version > 15):
+            if isVersionEntryByHash(version):
                 nameHash = mmh3.hash(key = entry.name.encode('utf-16-le'), seed = -1, signed = False)
                 assert nameHash == entry.hash, f"expected {entry.hash} for {entry.name} but get {nameHash}"
             else:
@@ -354,7 +366,7 @@ class MSG:
         langCount = len(self.languages)
         newFile.extend(struct.pack("<I", langCount))
         newFile.extend(b'\x00'*(len(newFile) % 8)) # pad to 8
-        if self.version > 12:
+        if isVersionEncrypt(self.version):
             dataOffsetPH = len(newFile)
             newFile.extend(struct.pack("<q", -1))
         unknDataOffsetPH = len(newFile)
@@ -399,7 +411,7 @@ class MSG:
 
         # read / decrypt string pool
         dataOffset = len(newFile)
-        if (self.version > 12):
+        if isVersionEncrypt(self.version):
             newFile[dataOffsetPH:dataOffsetPH+8] = struct.pack("<Q", len(newFile))
         
         # construct string pool
@@ -424,7 +436,7 @@ class MSG:
         # strOffsetDict = dict((v,k) for k,v in self.stringDict.items()) 
         wcharPool = b''.join(helper.toWcharBytes(x) for x in strOffsetDict.keys())
 
-        if self.version > 12:
+        if isVersionEncrypt(self.version):
             newFile.extend(helper.encrypt(wcharPool))
         else:
             newFile.extend(wcharPool)

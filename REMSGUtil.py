@@ -196,19 +196,19 @@ def importCSV(msgObj: MSG, filename: str, version: int = None, langCount: int = 
             name = fEntry[nameidx],
             attributeValues = attributes,
             langs = [helper.forceWindowsLineBreak(fEntry[i]) for i in langidxs],
-            hash = mmh3.hash(key = fEntry[nameidx].encode('utf-16-le'), seed = -1, signed = False) if version > 15 else None,
-            index = i if version <= 15 else None)
+            hash = mmh3.hash(key = fEntry[nameidx].encode('utf-16-le'), seed = -1, signed = False) if isVersionEntryByHash(version) else None,
+            index = i if not(isVersionEntryByHash(version)) else None)
         
         # not gonna check, left it to user
         # if entry.guid in oldEntrys.keys():
         #     assert entry.crc == oldEntrys[entry.guid].crc
         #     assert entry.name == oldEntrys[entry.guid].name
-        #     if (version > 15):
+        #     if isVersionEntryByHash(version):
         #         assert entry.hash == oldEntrys[entry.guid].hash
         #     else:
         #         assert entry.index == entry.index
         # else:
-        #     if (version > 15):
+        #     if isVersionEntryByHash(version):
         #         if entry.hash != mmh3.hash(key = entry.name.encode('utf-16-le'), seed = -1, signed = False):
         #             print(f"Incorrect hash value for {entry.name}, filling a correct one")
         #             entry.hash = mmh3.hash(key = entry.name.encode('utf-16-le'), seed = -1, signed = False)
@@ -283,7 +283,7 @@ def buildmhriceJson(msg: MSG) -> dict:
                 "name": entry.name,
                 "guid": str(entry.guid),
                 "crc?": entry.crc,
-                "hash": entry.hash if msg.version > 15 else 0xFFFFFFFF,
+                "hash": entry.hash if isVersionEntryByHash(msg.version) else 0xFFFFFFFF,
                 "attributes" : list([{valueTypeEnum(attrh["valueType"]): entry.attributes[i]}
                                         for i, attrh in enumerate(msg.attributeHeaders)]),
                 "content" : list([entry.langs[lang]
@@ -329,8 +329,8 @@ def importJson(msgObj: MSG, filename: str):
             attributeValues=list([ readAttributeFromStr(next(iter(attr.values())), msg.attributeHeaders[i]["valueType"])
                                     for i, attr in enumerate(jEntry["attributes"])]),
             langs=list([ helper.forceWindowsLineBreak(content) for content in jEntry["content"] ]),
-            hash=mmh3.hash(key = jEntry["name"].encode('utf-16-le'), seed = -1, signed = False) if msg.version > 15 else None,
-            index = jIndex if msg.version <= 15 else None
+            hash=mmh3.hash(key = jEntry["name"].encode('utf-16-le'), seed = -1, signed = False) if isVersionEntryByHash(msg.version) else None,
+            index = jIndex if not(isVersionEntryByHash(msg.version)) else None
         )
 
         newEntrys.append(entry)
