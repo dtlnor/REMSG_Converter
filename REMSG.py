@@ -97,8 +97,9 @@ MHR_SUPPORTED_LANG : Final[list[int]] = [
     12,
     13,
     21,
+    32,
 ]
-"""For MHRSB 13.0.0.1"""
+"""For MHRSB 15.0.0"""
 
 VERSION_2_LANG_COUNT : Final[dict[int,int]] = {
     12 : 23,

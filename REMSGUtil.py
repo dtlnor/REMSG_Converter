@@ -221,10 +221,10 @@ def importCSV(msgObj: MSG, filename: str, version: int = None, langCount: int = 
     return msg
 
 
-def exportTXT(msg: MSG, filename: str, lang: int):
+def exportTXT(msg: MSG, filename: str, lang: int, encode="utf-8"):
     """write txt file from MSG object with specified language"""
 
-    with io.open(filename, "w", encoding="utf-8") as txtf:
+    with io.open(filename, "w", encoding=encode) as txtf:
         txtf.writelines(['<string>'+entry.langs[lang].replace('\r\n','<lf>')+'\n' for entry in msg.entrys])
 
 
@@ -255,7 +255,7 @@ def exportMHRTextDump(msg: MSG, filename: str):
                 pass
 
         outputPath = os.path.join(folder, LANG_LIST.get(lang,f"lang_{lang}"), file)
-        exportTXT(msg, outputPath, lang)
+        exportTXT(msg, outputPath, lang, "utf-8-sig")
 
 
 def valueTypeEnum(ty: int) -> str:
@@ -278,7 +278,7 @@ def buildmhriceJson(msg: MSG) -> dict:
             "version" : msg.version,
             "attribute_headers" : list([{"ty": attr["valueType"],
                                         "name": attr["name"]}
-                                        for attr in msg.attributeHeaders]),
+                                            for attr in msg.attributeHeaders]),
             "entries" : list([{
                 "name": entry.name,
                 "guid": str(entry.guid),
@@ -317,7 +317,7 @@ def importJson(msgObj: MSG, filename: str):
     # replace Attribute Head
     msg.attributeHeaders = list([{"valueType": head["ty"],
                                     "name": head["name"]}
-                                    for head in mhriceJson["attribute_headers"]])
+                                        for head in mhriceJson["attribute_headers"]])
     
     newEntrys : list[Entry] = list()
     for jIndex, jEntry in enumerate(mhriceJson["entries"]):
