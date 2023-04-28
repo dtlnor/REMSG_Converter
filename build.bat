@@ -1,1 +1,1 @@
-pyinstaller -F main.py -n REMSG_Converter
+pyinstaller -F src\main.py -n REMSG_Converter
