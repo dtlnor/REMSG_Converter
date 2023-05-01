@@ -241,7 +241,7 @@ class MSG:
         entryCount, = struct.unpack("<I", filestream.read(4))
         attributeCount, = struct.unpack("<I", filestream.read(4))
         langCount, = struct.unpack("<I", filestream.read(4))
-        seek_align_up(filestream, 8)   # pad to 8
+        pad_align_up(filestream, 8)   # pad to 8
         if isVersionEncrypt(version):
             dataOffset, = struct.unpack("<Q", filestream.read(8))
         unknDataOffset, = struct.unpack("<Q", filestream.read(8))
@@ -268,7 +268,7 @@ class MSG:
             print(f"unkn lang found. {str(languages)}. Please update LANG_LIST from via.Language")
 
         # pad to 8
-        seek_align_up(filestream, 8)
+        pad_align_up(filestream, 8)
 
         # get attribute headers, get type of each attr
         assert attributeOffset == filestream.tell(), f"expected attributeValueTypes at {attributeOffset} but at {filestream.tell()}"
@@ -277,7 +277,7 @@ class MSG:
             attributeHeaders.append(dict(valueType = struct.unpack("<i", filestream.read(4))[0]))
 
         # pad to 8
-        seek_align_up(filestream, 8)
+        pad_align_up(filestream, 8)
         
         # get attribute headers' name but hold the offset at attributeNamesOffsets. string reading will do after decrypt.
         assert attributeNameOffset == filestream.tell(), f"expected attributeNamesOffset at {attributeNameOffset} but at {filestream.tell()}"

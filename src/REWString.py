@@ -51,7 +51,7 @@ def encrypt(rawBytes: bytes) -> bytes:
 
 
 def wcharPool2StrDict(wcharPool: bytes) -> dict[int, str]:
-    """wcharPool to stringDict"""
+    """wcharPool to stringDict with {offset: content}"""
     if len(wcharPool) == 0:
         return dict()
     

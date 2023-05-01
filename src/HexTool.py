@@ -2,9 +2,9 @@ import io
 import struct
 
 
-def seek_align_up(filestream: io.BufferedReader, align: int) -> int | None:
+def pad_align_up(filestream: io.BufferedReader, align: int) -> int | None:
     """pad to align"""
-    padSize = filestream.tell() % align
+    padSize = (align - filestream.tell() % align) % align
     padding, = struct.unpack(f"{padSize}s", filestream.read(padSize))
     assert all([x == 0 for x in padding]), "padding value should be zero"
     return padding

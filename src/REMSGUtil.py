@@ -301,7 +301,11 @@ def exportJson(msg: MSG, filename: str):
 
 
 def importJson(msgObj: MSG, filename: str):
-    """read json file, and return the new MSG object"""
+    """read json file, and return the new MSG object.
+
+    @param msgObj: deprecated parameter, you may pass None for this.
+    @param filename: filename string. 
+    """
 
     msg = MSG()
     mhriceJson = ""
