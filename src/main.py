@@ -5,7 +5,7 @@ import REMSGUtil
 import sys
 import mmh3
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def DebugTest(msg, filenameFull):
