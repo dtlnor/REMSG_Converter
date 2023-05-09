@@ -234,19 +234,25 @@ def importCSV(msgObj: MSG, filename: str, version: int = None, langCount: int = 
     return msg
 
 
-def exportTXT(msg: MSG, filename: str, lang: int, encode="utf-8"):
+def exportTXT(msg: MSG, filename: str, lang: int, encode=None):
     """write txt file from MSG object with specified language"""
 
-    with io.open(filename, "w", encoding=encode) as txtf:
+    with io.open(filename, "w", encoding=encode if encode is not None else 'utf-8') as txtf:
         txtf.writelines(['<string>'+entry.langs[lang].replace('\r\n','<lf>')+'\n' for entry in msg.entrys])
 
 
-def importTXT(msgObj: MSG, filename: str, lang: int) -> MSG:
+def importTXT(msgObj: MSG, filename: str, lang: int, encode=None) -> MSG:
     """read txt file, modify the provided msg object, and return the new MSG object"""
+    if encode is None:
+        encode = getEncoding(filename)
+    elif 'utf' in encode and 'sig' not in encode:
+        testEncode = getEncoding(filename)
+        if testEncode.endswith('sig'):
+            encode = testEncode
 
     msg = copy.deepcopy(msgObj)
     lines = None
-    with io.open(filename, mode="r", encoding=getEncoding(filename)) as txtf:
+    with io.open(filename, mode="r", encoding=encode) as txtf:
         lines = list([s.rstrip('\n').rstrip('\r').removeprefix("<string>").replace('<lf>','\r\n') for s in txtf.readlines() if s.startswith("<string>")])
 
     assert len(lines) == len(msg.entrys), "Invalid number of entry"
