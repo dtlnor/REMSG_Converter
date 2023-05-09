@@ -64,10 +64,23 @@ def searchGuid(msg: MSG, guid: uuid.UUID):
 def getEncoding(filename: str, bufferSize: int = 256*1024) -> str:
     """althoguh I set utf-8 to all output file, but in-case someone copy paste to another file and has diff encoding..."""
     rawdata = open(filename, 'rb').read(bufferSize)
-    result = chardet.detect(rawdata)
-    encode = result['encoding']
-    confidence = result['confidence']
-    if encode is None or "ascii" == encode.lower() or (confidence < 0.75 and 'utf' not in encode.lower()):
+
+    CONFIDENCE_MUST_BE = 0.95
+    CONFIDENCE_MOST_LIKELY = 0.75
+    CONFIDENCE_COULD_BE = 0.5
+
+    allResult = chardet.detect_all(rawdata, ignore_threshold=False)
+    print(allResult)
+    encode = allResult[0]["encoding"]
+    confidence = allResult[0]["confidence"]
+    if confidence < CONFIDENCE_MUST_BE:
+        for result in allResult:
+            if "utf" in result["encoding"] and result["confidence"] > CONFIDENCE_COULD_BE:
+                encode = result["encoding"]
+                confidence = result["confidence"]
+                break
+    
+    if encode is None or "ascii" == encode.lower() or (confidence < CONFIDENCE_MOST_LIKELY and 'utf' not in encode.lower()):
         encode = 'utf-8'
     if encode.lower() == 'utf-8':
         encode = 'utf-8-sig'
