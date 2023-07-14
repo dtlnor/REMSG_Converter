@@ -4,6 +4,7 @@ import argparse
 import REMSGUtil
 import sys
 import mmh3
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,10 +57,7 @@ def DebugTest(msg, filenameFull):
     REMSGUtil.searchSameGuid(msg, filenameFull)
 
 def isValidMsgName(name: str) -> bool:
-    return ".msg" in name.lower() and \
-        not name.lower().endswith(".txt") and \
-        not name.lower().endswith(".csv") and \
-        not name.lower().endswith(".json")
+    return re.search(r"\.msg(\.\d+)?$", name, re.IGNORECASE) is not None
 
 def getAllFileFromFolder(folderName : str, filetype = 'msg'):
     filetype = filetype.lower()
@@ -82,15 +80,9 @@ def fillList(path: str, filetype = 'msg'):
         if filetype == 'msg':
             if isValidMsgName(path):
                 return [path,]
-            else:
-                return []
-        else:
-            if path.lower().endswith('.'+filetype):
-                return [path,]
-            else:
-                return []
-    else:
-        return []
+        elif path.lower().endswith('.'+filetype):
+            return [path,]
+    return []
 
 def worker(item, mode = "csv", modFile: str = None, lang : int = REMSGUtil.SHORT_LANG_LU["ja"], **kwargs):
     try:
