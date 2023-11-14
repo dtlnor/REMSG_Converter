@@ -5,24 +5,24 @@ import struct
 def pad_align_up(filestream: io.BufferedReader, align: int) -> int | None:
     """pad to align"""
     padSize = (align - filestream.tell() % align) % align
-    padding, = struct.unpack(f"{padSize}s", filestream.read(padSize))
+    (padding,) = struct.unpack(f"{padSize}s", filestream.read(padSize))
     assert all([x == 0 for x in padding]), "padding value should be zero"
     return padding
 
 
-def printHexView(bytestream: bytearray | bytes, width = 32):
+def printHexView(bytestream: bytearray | bytes, width=32):
     """print hex bytes similar in hex editor, for debug usage"""
     view = ""
     digit = len(str(len(bytestream)))
     for i, b in enumerate(bytestream):
-        sep = ' '
-        pref = ''
+        sep = " "
+        pref = ""
         if i % width == 0:
-            pref = ("{0:0"+str(digit)+"d}").format(i) + ": "
+            pref = ("{0:0" + str(digit) + "d}").format(i) + ": "
         elif i % width == width - 1:
-            sep = '\n'
+            sep = "\n"
         elif i % 4 == 4 - 1:
-            sep = '|'
+            sep = "|"
         view = view + pref + f"{b:02X}" + sep
     print(view)
     return view
