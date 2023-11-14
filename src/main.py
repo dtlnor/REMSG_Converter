@@ -1,10 +1,11 @@
-import os
-import logging
 import argparse
-import REMSGUtil
-import sys
-import mmh3
+import logging
+import os
 import re
+import sys
+
+import mmh3
+import REMSGUtil
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -1,10 +1,11 @@
 import io
 import struct
 import uuid
-import mmh3
 from typing import Final
-from HexTool import *
+
+import mmh3
 import REWString as helper
+from HexTool import pad_align_up
 
 LANG_LIST : Final[dict[int, str]] = {
     0 : "Japanese",
