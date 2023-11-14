@@ -32,6 +32,7 @@ echo Vietnamese: vi
 echo Indonesian: id
 echo Fiction: cc
 echo Hindi: hi
+echo LatinAmericanSpanish: es419
 set /p lang="Please enter one of the lang to extract: "
 REMSG_Converter.exe -i %1 -m txt -l %lang%
 pause
