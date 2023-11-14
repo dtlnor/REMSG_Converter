@@ -17,8 +17,10 @@ for %%f in (bat\*.bat) DO (
 
 REM Put other files in ./release
 copy src\*.py release\src
+copy requirements.txt release
 cd release
 echo|..\download_portable_python.bat
+del requirements.txt
 
 REM Zip ./release
 powershell Compress-Archive -Force -Path * -Destination ../REMSG_Converter.zip

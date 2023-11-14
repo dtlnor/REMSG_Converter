@@ -2,8 +2,8 @@
 REM Make a portable python environment in ./python
 
 REM Version info
-set PYTHON_VERSION=3.10.11
-set PYTHON_VER_SHORT=310
+set PYTHON_VERSION=3.11.6
+set PYTHON_VER_SHORT=311
 
 REM Delete ./python if exist
 if exist python rmdir /s python
@@ -22,7 +22,7 @@ REM Download mmh3 and chardet
 ) > python%PYTHON_VER_SHORT%._pth
 curl -OL https://bootstrap.pypa.io/get-pip.py
 python get-pip.py
-python -m pip install mmh3 chardet
+python -m pip install -r ..\requirements.txt
 robocopy Lib\site-packages\chardet chardet /E
 copy Lib\site-packages\mmh3.cp%PYTHON_VER_SHORT%-win_amd64.pyd .
 rmdir /s /q Lib Scripts
