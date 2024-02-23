@@ -124,23 +124,7 @@ def worker(item, mode="csv", modFile: str = None, lang: int = REMSGUtil.SHORT_LA
         # print(traceback.format_exc())
         logger.exception(e)
 
-
-def main():
-    parser = argparse.ArgumentParser(
-                    prog = 'REMSG_Converter.exe',
-                    description = 'Encode / Decode .msg file from RE Engine',
-                    epilog = "https://github.com/dtlnor/REMSG_Converter")
-    parser.add_argument("-i", "--input", type=str, help="input msg file or folder")
-    parser.add_argument("-x", "--multiprocess", type=int, default=4, help="when you input multiple files by input a folder. How many process use to convert the files")
-    parser.add_argument("-m", "--mode", type=str, choices=["csv", "txt", "json"], default="csv", help="choose output file format.\n  txt = msg tool style txt.\n  csv = all lang in one csv with rich info.\n  json = all lang in one json with rich info in mhrice format",)
-    parser.add_argument("-e", "--edit", type=str, help="input (csv/txt/json) file to edit the content.\n  if input as folder, the filename and number of files\n  should be same as original .msg file\n  (with corresponding (.txt/.csv/.json) extension)",)
-    parser.add_argument("-l", "--lang", type=str, default="ja", choices=REMSGUtil.SHORT_LANG_LU.keys(), help="input the lang you want to export for txt mode (default ja)\n")
-    parser.add_argument("-f", "--txtformat", type=str, default=None, choices=["utf-8", "utf-8-sig"], help="force txt read/write format to be 'utf-8' or 'utf-8-sig'(BOM).\n")
-    parser.add_argument("args", nargs=argparse.REMAINDER)
-    args = parser.parse_args()
-
-    # print('\n'.join([REMSGUtil.LANG_LIST.get(v,f"lang_{v}")+": "+k for k, v in REMSGUtil.SHORT_LANG_LU.items()]))
-
+def getFolders(args):
     filenameList = []
     editList = []
 
@@ -215,6 +199,32 @@ def main():
     if editMode and (len(editList) <= 0 or None in editList):
         print(f"{args.mode} mode with edit file/folder input but no {args.mode} file found.")
         sys.exit(1)
+
+    return filenameList, editList
+
+def main():
+    parser = argparse.ArgumentParser(
+                    prog = 'REMSG_Converter.exe',
+                    description = 'Encode / Decode .msg file from RE Engine',
+                    epilog = "https://github.com/dtlnor/REMSG_Converter")
+    parser.add_argument("-i", "--input", type=str,
+                        help="input msg file or folder")
+    parser.add_argument("-x", "--multiprocess", type=int, default=4,
+                        help="when you input multiple files by input a folder. How many process use to convert the files")
+    parser.add_argument("-m", "--mode", type=str, choices=["csv", "txt", "json"], default="csv",
+                        help="choose output file format.\n  txt = msg tool style txt.\n  csv = all lang in one csv with rich info.\n  json = all lang in one json with rich info in mhrice format",)
+    parser.add_argument("-e", "--edit", type=str,
+                        help="input (csv/txt/json) file to edit the content.\n  if input as folder, the filename and number of files\n  should be same as original .msg file\n  (with corresponding (.txt/.csv/.json) extension)",)
+    parser.add_argument("-l", "--lang", type=str, default="ja", choices=REMSGUtil.SHORT_LANG_LU.keys(),
+                        help="input the lang you want to export for txt mode (default ja)\n")
+    parser.add_argument("-f", "--txtformat", type=str, default=None, choices=["utf-8", "utf-8-sig"],
+                        help="force txt read/write format to be 'utf-8' or 'utf-8-sig'(BOM).\n")
+    parser.add_argument("args", nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+
+    # print('\n'.join([REMSGUtil.LANG_LIST.get(v,f"lang_{v}")+": "+k for k, v in REMSGUtil.SHORT_LANG_LU.items()]))
+
+    filenameList, editList = getFolders(args)
 
     executor = concurrent.futures.ProcessPoolExecutor(args.multiprocess)
     futures = [executor.submit(worker, file, mode=args.mode, modFile=edit, lang=REMSGUtil.SHORT_LANG_LU[args.lang], txtformat=args.txtformat) for file, edit in zip(filenameList, editList)]
