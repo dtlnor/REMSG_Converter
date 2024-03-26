@@ -59,8 +59,9 @@ def DebugTest(msg, filenameFull):
     REMSGUtil.searchSameGuid(msg)
 
 
+isValidMsgNameRegex = re.compile(r"\.msg.*(?<!\.txt)(?<!\.json)(?<!\.csv)$", re.IGNORECASE)
 def isValidMsgName(name: str) -> bool:
-    return re.search(r"\.msg(\.\d+)?$", name, re.IGNORECASE) is not None
+    return isValidMsgNameRegex.search(name) is not None
 
 
 def getAllFileFromFolder(folderName: str, filetype="msg"):
