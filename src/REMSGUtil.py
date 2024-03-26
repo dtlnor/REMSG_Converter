@@ -178,7 +178,7 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         if msg is not None:
             langCount = len(msg.languages)
         else:
-            langCount = helper.VERSION_2_LANG_COUNT[version]
+            langCount = REMSG.VERSION_2_LANG_COUNT[version]
 
     with io.open(filename, "r", encoding=getEncoding(filename), newline="\n") as csvf:
         rows = list(csv.reader(csvf))
@@ -352,7 +352,7 @@ def importJson(msgObj: REMSG.MSG, filename: str):
     if len(mhriceJson["entries"]) > 0:
         msg.languages = list(range(len(mhriceJson["entries"][0]["content"])))
     else:
-        msg.languages = list(range(helper.VERSION_2_LANG_COUNT[msg.version]))
+        msg.languages = list(range(REMSG.VERSION_2_LANG_COUNT[msg.version]))
 
     # replace Attribute Head
     msg.attributeHeaders = list([{"valueType": head["ty"], "name": head["name"]} for head in mhriceJson["attribute_headers"]])
