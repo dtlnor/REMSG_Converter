@@ -75,9 +75,12 @@ def getEncoding(filename: str, bufferSize: int = 256 * 1024) -> str:
     CONFIDENCE_COULD_BE = 0.5
 
     allResult = chardet.detect_all(rawdata, ignore_threshold=False)
-    print(allResult)
+    # print(allResult)
     encode = allResult[0]["encoding"]
     confidence = allResult[0]["confidence"]
+    if encode is None or confidence < 0.01:
+        # empty file
+        return "utf-8-sig"
     if confidence < CONFIDENCE_MUST_BE:
         for result in allResult:
             if "utf" in result["encoding"] and result["confidence"] > CONFIDENCE_COULD_BE:
@@ -85,10 +88,11 @@ def getEncoding(filename: str, bufferSize: int = 256 * 1024) -> str:
                 confidence = result["confidence"]
                 break
 
-    if encode is None or "ascii" == encode.lower() or (confidence < CONFIDENCE_MOST_LIKELY and "utf" not in encode.lower()):
+    if encode is None or encode.lower() in ["ascii", "windows-1254", "iso-8859-1"] or (confidence < CONFIDENCE_MOST_LIKELY and "utf" not in encode.lower()):
         encode = "utf-8"
     if encode.lower() == "utf-8":
         encode = "utf-8-sig"
+    # print(f"Detected Encoding: {encode.lower()} File: {filename}")
     return encode
 
 
