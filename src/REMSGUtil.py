@@ -385,4 +385,4 @@ def exportMSG(msg: REMSG.MSG, filename: str):
     """write a msg file from a REMSG.MSG object"""
 
     with io.open(filename, "wb") as outstream:
-        outstream.write(msg.writeREMSG.MSG())
+        outstream.write(msg.writeMSG())
