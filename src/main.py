@@ -56,7 +56,7 @@ def DebugTest(msg, filenameFull):
     REMSGUtil.searchEntryName(msg, filenameFull, "ep_qn")
     REMSGUtil.exportMHRTextDump(msg, filenameFull)
     REMSGUtil.searchAttrTy(msg, filenameFull, -1)
-    REMSGUtil.searchSameGuid(msg, filenameFull)
+    REMSGUtil.searchSameGuid(msg)
 
 
 def isValidMsgName(name: str) -> bool:
