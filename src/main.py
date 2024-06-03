@@ -125,7 +125,9 @@ def worker(item, mode="csv", modFile: str = None, lang: int = REMSGUtil.SHORT_LA
         # print(traceback.format_exc())
         logger.exception(e)
 
-def getFolders(args):
+def getFolders(parser):
+    args = parser.parse_args()
+
     filenameList = []
     editList = []
 
@@ -225,7 +227,7 @@ def main():
 
     # print('\n'.join([REMSGUtil.LANG_LIST.get(v,f"lang_{v}")+": "+k for k, v in REMSGUtil.SHORT_LANG_LU.items()]))
 
-    filenameList, editList = getFolders(args)
+    filenameList, editList = getFolders(parser)
 
     executor = concurrent.futures.ProcessPoolExecutor(args.multiprocess)
     futures = [executor.submit(worker, file, mode=args.mode, modFile=edit, lang=REMSGUtil.SHORT_LANG_LU[args.lang], txtformat=args.txtformat) for file, edit in zip(filenameList, editList)]
