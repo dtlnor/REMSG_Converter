@@ -213,11 +213,11 @@ def main():
     parser.add_argument("-i", "--input", type=str,
                         help="input msg file or folder")
     parser.add_argument("-x", "--multiprocess", type=int, default=4,
-                        help="when you input multiple files by input a folder. How many process use to convert the files")
+                        help="when you are processing multiple files. How many processes to use to convert the files")
     parser.add_argument("-m", "--mode", type=str, choices=["csv", "txt", "json"], default="csv",
-                        help="choose output file format.\n  txt = msg tool style txt.\n  csv = all lang in one csv with rich info.\n  json = all lang in one json with rich info in mhrice format",)
+                        help="choose output file format.\n  txt = msg tool style txt.\n  csv = all lang in one csv with rich info.\n  json = all lang in one json with rich info in mhrice format")
     parser.add_argument("-e", "--edit", type=str,
-                        help="input (csv/txt/json) file to edit the content.\n  if input as folder, the filename and number of files\n  should be same as original .msg file\n  (with corresponding (.txt/.csv/.json) extension)",)
+                        help="input (csv/txt/json) file to edit the content.\n  if input as folder, the filename and number of files\n  should be same as original .msg file\n  (with corresponding (.txt/.csv/.json) extension)")
     parser.add_argument("-l", "--lang", type=str, default="ja", choices=REMSGUtil.SHORT_LANG_LU.keys(),
                         help="input the lang you want to export for txt mode (default ja)\n")
     parser.add_argument("-f", "--txtformat", type=str, default=None, choices=["utf-8", "utf-8-sig"],
@@ -232,6 +232,8 @@ def main():
     executor = concurrent.futures.ProcessPoolExecutor(args.multiprocess)
     futures = [executor.submit(worker, file, mode=args.mode, modFile=edit, lang=REMSGUtil.SHORT_LANG_LU[args.lang], txtformat=args.txtformat) for file, edit in zip(filenameList, editList)]
     concurrent.futures.wait(futures)
+
+    print("All Done.")
 
 
 if __name__ == "__main__":
