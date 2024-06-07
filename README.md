@@ -20,10 +20,10 @@ print help for command line args usage:
 
 ```REMSG_Converter.exe -h```
 
-## Convert json / txt / csv to msg
+## Convert msg to json / txt / csv
 drag .msg.* file/folder to `msg2{csv/json/txt}.bat`
 
-## Convert msg to json / txt / csv
+## Convert json / txt / csv to msg
 drag .csv/.json/.txt file/folder **AND** .msg.* file/folder to `{csv/json/txt}+msg2msg.bat`
 
 ## Use as python module
