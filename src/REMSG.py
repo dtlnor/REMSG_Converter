@@ -42,6 +42,7 @@ LANG_LIST: Final[dict[int, str]] = {
     31: "Hindi",
     32: "LatinAmericanSpanish",
     33: "Max",
+    -1: "Unused", # defined by me, for version 23 and above
 }
 """via.Language, with fixing the name of cht and chs"""
 
@@ -111,6 +112,7 @@ VERSION_2_LANG_COUNT: Final[dict[int, int]] = {
     20: 33,
     0x20220626: 33,  # before 13.0.0, 0x20220626 has 32 lang count
     22: 33,
+    23: 33,
 }
 """lang count in each msg version.
 0x20220626 has 32 lang count in early version"""
@@ -125,6 +127,9 @@ def isVersionEntryByHash(version: int) -> bool:
     """check if Entry haed index by hash"""
     return version > 15 and version != 0x2022033D
 
+def isVersionIgnoreUnusedLang(version: int) -> bool:
+    """check if version use -1 to ignore unused lang"""
+    return version >= 23 and version != 0x2022033D
 
 class Entry:
     """meat of MSG"""
@@ -266,10 +271,11 @@ class MSG:
 
         # indexes of all lang (follow via.Language)
         assert langOffset == filestream.tell(), f"expected languages at {langOffset} but at {filestream.tell()}"
+        # keep in mind `languages` is a list of indexes could be duplicated and not in sequence now
         languages: list[int] = list()
         for _ in range(langCount):
-            languages.append(struct.unpack("<I", filestream.read(4))[0])
-        if not all([x in LANG_LIST.keys() and i == x for i, x in enumerate(languages)]):
+            languages.append(struct.unpack("<i", filestream.read(4))[0])
+        if not all([x in LANG_LIST.keys() and (i == x or x == -1) for i, x in enumerate(languages)]):
             print(f"unkn lang found. {str(languages)}. Please update LANG_LIST from via.Language")
 
         # pad to 8
@@ -392,7 +398,7 @@ class MSG:
         newFile[unknDataOffsetPH : unknDataOffsetPH + 8] = struct.pack("<Q", len(newFile))
         newFile.extend(struct.pack("<Q", 0))  # unknData
         newFile[langOffsetPH : langOffsetPH + 8] = struct.pack("<Q", len(newFile))
-        newFile.extend(struct.pack("<" + "I" * langCount, *self.languages))  # languages
+        newFile.extend(struct.pack("<" + "i" * langCount, *self.languages))  # languages
 
         newFile.extend(b"\x00" * (len(newFile) % 8))  # pad to 8
         newFile[attributeOffsetPH : attributeOffsetPH + 8] = struct.pack("<Q", len(newFile))
@@ -433,7 +439,7 @@ class MSG:
         stringPoolSet.update([a["name"] for a in self.attributeHeaders])
         for entry in self.entrys:
             stringPoolSet.add(entry.name)
-            stringPoolSet.update([entry.langs[lang] for lang in self.languages])
+            stringPoolSet.update(entry.langs)
             stringPoolSet.update([entry.attributes[idx] for idx in isStrAttrIdx])
 
         strOffsetDict = helper.calcStrPoolOffsets(stringPoolSet)  # not doing string processing here, as it will change the key.
@@ -451,8 +457,8 @@ class MSG:
             newFile[attributeNamesOffsetsPH[i] : attributeNamesOffsetsPH[i] + 8] = struct.pack("<Q", strOffsetDict[a["name"]] + dataOffset)
         for entry in self.entrys:
             newFile[entry.entryNameOffsetPH : entry.entryNameOffsetPH + 8] = struct.pack("<Q", strOffsetDict[entry.name] + dataOffset)
-            for lang in self.languages:
-                newFile[entry.contentOffsetsByLangsPH[lang] : entry.contentOffsetsByLangsPH[lang] + 8] = struct.pack("<Q", strOffsetDict[entry.langs[lang]] + dataOffset)
+            for i, lang in enumerate(self.languages):
+                newFile[entry.contentOffsetsByLangsPH[i] : entry.contentOffsetsByLangsPH[i] + 8] = struct.pack("<Q", strOffsetDict[entry.langs[i]] + dataOffset)
             for idx in isStrAttrIdx:
                 newFile[entry.attributesPH[idx] : entry.attributesPH[idx] + 8] = struct.pack("<Q", strOffsetDict[entry.attributes[idx]] + dataOffset)
             for idx in isNullAttrIdx:

@@ -162,7 +162,7 @@ def exportCSV(msg: REMSG.MSG, filename: str):
                 [str(x) for x in (entry.guid, entry.crc)]
                 + [str(x) for x in entry.attributes]
                 + [entry.name,]
-                + [entry.langs[lang] for lang in msg.languages]
+                + entry.langs
             )
 
 
@@ -189,7 +189,6 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         nameidx = rows[0].index("entry name")
         attridxs = list([i for i, field in enumerate(rows[0]) if field.startswith("<") and field.endswith(">")])
         fAttrList = list([rows[0][idx].removeprefix("<").removesuffix(">") for idx in attridxs])
-        langidxs = list([rows[0].index(REMSG.LANG_LIST.get(i, f"lang_{i}")) for i in range(langCount)])
         # fAttrNum = len(fAttrList)
         fEntrys = list([row for row in rows[1:]])
         # print(fAttrNum)
@@ -212,12 +211,14 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
             value = readAttributeFromStr(fEntry[attridxs[ai]], header["valueType"])
             attributes.append(value)
 
+        contents = fEntry[(len(fAttrList)+3):]
+        assert len(contents) == langCount, f"Invalid number of language / contents.\n{"\n".join(contents)}"
         entry.buildEntry(
             guid=fEntry[guididx],
             crc=int(fEntry[crcidx]),
             name=fEntry[nameidx],
             attributeValues=attributes,
-            langs=[helper.forceWindowsLineBreak(fEntry[i]) for i in langidxs],
+            langs=[helper.forceWindowsLineBreak(content) for content in contents],
             hash=mmh3.hash(key=fEntry[nameidx].encode("utf-16-le"), seed=-1, signed=False) if REMSG.isVersionEntryByHash(version) else None,
             index=i if not (REMSG.isVersionEntryByHash(version)) else None,
         )
@@ -244,14 +245,14 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
     return msg
 
 
-def exportTXT(msg: REMSG.MSG, filename: str, lang: int, encode=None):
+def exportTXT(msg: REMSG.MSG, filename: str, langIndex: int, encode=None):
     """write txt file from REMSG.MSG object with specified language"""
 
     with io.open(filename, "w", encoding=encode if encode is not None else "utf-8") as txtf:
-        txtf.writelines(["<string>" + entry.langs[lang].replace("\r\n", "<lf>") + "\n" for entry in msg.entrys])
+        txtf.writelines(["<string>" + entry.langs[langIndex].replace("\r\n", "<lf>") + "\n" for entry in msg.entrys])
 
 
-def importTXT(msgObj: REMSG.MSG, filename: str, lang: int, encode=None) -> REMSG.MSG:
+def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode=None) -> REMSG.MSG:
     """read txt file, modify the provided msg object, and return the new REMSG.MSG object"""
     if encode is None:
         encode = getEncoding(filename)
@@ -267,7 +268,7 @@ def importTXT(msgObj: REMSG.MSG, filename: str, lang: int, encode=None) -> REMSG
 
     assert len(lines) == len(msg.entrys), "Invalid number of entry"
     for i, entry in enumerate(msg.entrys):
-        entry.langs[lang] = lines[i]
+        entry.langs[langIndex] = lines[i]
 
     return msg
 
@@ -310,6 +311,7 @@ def buildmhriceJson(msg: REMSG.MSG) -> dict:
 
     infos = {
         "version": msg.version,
+        "languages": msg.languages,
         "attribute_headers": list([{"ty": attr["valueType"], "name": attr["name"]} for attr in msg.attributeHeaders]),
         "entries": list(
             [
@@ -319,7 +321,7 @@ def buildmhriceJson(msg: REMSG.MSG) -> dict:
                     "crc?": entry.crc,
                     "hash": entry.hash if REMSG.isVersionEntryByHash(msg.version) else 0xFFFFFFFF,
                     "attributes": list([{valueTypeEnum(attrh["valueType"]): entry.attributes[i]} for i, attrh in enumerate(msg.attributeHeaders)]),
-                    "content": list([entry.langs[lang] for lang in msg.languages]),
+                    "content": entry.langs,
                 }
                 for entry in msg.entrys
             ]
@@ -349,10 +351,13 @@ def importJson(msgObj: REMSG.MSG, filename: str):
         mhriceJson = json.load(jsonf)
 
     msg.version = int(mhriceJson["version"])
-    if len(mhriceJson["entries"]) > 0:
-        msg.languages = list(range(len(mhriceJson["entries"][0]["content"])))
+    if REMSG.isVersionIgnoreUnusedLang(msg.version):
+        msg.languages = mhriceJson["languages"]
     else:
-        msg.languages = list(range(REMSG.VERSION_2_LANG_COUNT[msg.version]))
+        if len(mhriceJson["entries"]) > 0:
+            msg.languages = list(range(len(mhriceJson["entries"][0]["content"])))
+        else:
+            msg.languages = list(range(REMSG.VERSION_2_LANG_COUNT[msg.version]))
 
     # replace Attribute Head
     msg.attributeHeaders = list([{"valueType": head["ty"], "name": head["name"]} for head in mhriceJson["attribute_headers"]])
