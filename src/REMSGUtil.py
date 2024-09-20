@@ -219,7 +219,7 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
             name=fEntry[nameidx],
             attributeValues=attributes,
             langs=[helper.forceWindowsLineBreak(content) for content in contents],
-            hash=mmh3.hash(key=fEntry[nameidx].encode("utf-16-le"), seed=-1, signed=False) if REMSG.isVersionEntryByHash(version) else None,
+            hash=mmh3.hash(key=fEntry[nameidx].encode("utf-16-le"), seed=0xFFFFFFFF, signed=False) if REMSG.isVersionEntryByHash(version) else None,
             index=i if not (REMSG.isVersionEntryByHash(version)) else None,
         )
 
@@ -233,9 +233,9 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         #         assert entry.index == entry.index
         # else:
         #     if isVersionEntryByHash(version):
-        #         if entry.hash != mmh3.hash(key = entry.name.encode('utf-16-le'), seed = -1, signed = False):
+        #         if entry.hash != mmh3.hash(key = entry.name.encode('utf-16-le'), seed = 0xFFFFFFFF, signed = False):
         #             print(f"Incorrect hash value for {entry.name}, filling a correct one")
-        #             entry.hash = mmh3.hash(key = entry.name.encode('utf-16-le'), seed = -1, signed = False)
+        #             entry.hash = mmh3.hash(key = entry.name.encode('utf-16-le'), seed = 0xFFFFFFFF, signed = False)
         #     else:
         #         assert entry.index >= len(oldEntrys)
 
@@ -371,7 +371,7 @@ def importJson(msgObj: REMSG.MSG, filename: str):
             name=jEntry["name"],
             attributeValues=list([readAttributeFromStr(next(iter(attr.values())), msg.attributeHeaders[i]["valueType"]) for i, attr in enumerate(jEntry["attributes"])]),
             langs=list([helper.forceWindowsLineBreak(content) for content in jEntry["content"]]),
-            hash=mmh3.hash(key=jEntry["name"].encode("utf-16-le"), seed=-1, signed=False) if REMSG.isVersionEntryByHash(msg.version) else None,
+            hash=mmh3.hash(key=jEntry["name"].encode("utf-16-le"), seed=0xFFFFFFFF, signed=False) if REMSG.isVersionEntryByHash(msg.version) else None,
             index=jIndex if not (REMSG.isVersionEntryByHash(msg.version)) else None,
         )
 

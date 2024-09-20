@@ -334,7 +334,7 @@ class MSG:
             # set entry name
             entry.setName(helper.seekString((entry.entryNameOffset - dataOffset), stringDict))
             if isVersionEntryByHash(version):
-                nameHash = mmh3.hash(key=entry.name.encode("utf-16-le"), seed=-1, signed=False)
+                nameHash = mmh3.hash(key=entry.name.encode("utf-16-le"), seed=0xFFFFFFFF, signed=False)
                 assert nameHash == entry.hash, f"expected {entry.hash} for {entry.name} but get {nameHash}"
             else:
                 assert entryIndex == entry.index, f"expected {entryIndex} for {entry.name} but get {entry.index}"
