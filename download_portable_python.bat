@@ -2,7 +2,7 @@
 REM Make a portable python environment in ./python
 
 REM Version info
-set PYTHON_VERSION=3.12.2
+set PYTHON_VERSION=3.12.4
 set PYTHON_VER_SHORT=312
 
 REM Delete ./python if exist
