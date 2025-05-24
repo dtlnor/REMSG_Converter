@@ -26,6 +26,8 @@ drag .msg.* file/folder to `msg2{csv/json/txt}.bat`
 ## Convert json / txt / csv to msg
 drag .csv/.json/.txt file/folder **AND** .msg.* file/folder to `{csv/json/txt}+msg2msg.bat`
 
+the `filename.msg.{version}.new` file is the modded file
+
 ## Use as python module
 ```py
 # use case could be find at main.py. under DebugTest() or worker()
