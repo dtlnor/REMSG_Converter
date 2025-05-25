@@ -245,11 +245,11 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
     return msg
 
 
-def exportTXT(msg: REMSG.MSG, filename: str, langIndex: int, encode=None):
+def exportTXT(msg: REMSG.MSG, filename: str, langIndex: int, encode=None, withEntryName=False):
     """write txt file from REMSG.MSG object with specified language"""
 
     with io.open(filename, "w", encoding=encode if encode is not None else "utf-8") as txtf:
-        txtf.writelines(["<string>" + entry.langs[langIndex].replace("\r\n", "<lf>") + "\n" for entry in msg.entrys])
+        txtf.writelines([f"<string{'' if not withEntryName else "="+entry.name}>" + entry.langs[langIndex].replace("\r\n", "<lf>") + "\n" for entry in msg.entrys])
 
 
 def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode=None) -> REMSG.MSG:
@@ -273,7 +273,7 @@ def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode=None) -> 
     return msg
 
 
-def exportMHRTextDump(msg: REMSG.MSG, filename: str):
+def exportMHRTextDump(msg: REMSG.MSG, filename: str, withEntryName=False):
     """export all the content with all the language seperate by folders."""
 
     folder, file = os.path.split(filename)
@@ -285,7 +285,7 @@ def exportMHRTextDump(msg: REMSG.MSG, filename: str):
                 print(e)
 
         outputPath = os.path.join(folder, REMSG.LANG_LIST.get(lang, f"lang_{lang}"), file)
-        exportTXT(msg, outputPath, lang, "utf-8-sig")
+        exportTXT(msg, outputPath, lang, "utf-8-sig", withEntryName)
 
 
 def valueTypeEnum(ty: int) -> str:
