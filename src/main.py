@@ -11,54 +11,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def DebugTest(msg, filenameFull):
-    REMSGUtil.exportCSV(msg, filenameFull + ".csv")
-    REMSGUtil.exportTXT(msg, filenameFull + ".txt", 0)
-    REMSGUtil.exportJson(msg, filenameFull + ".json")
-
-    csvmsg = REMSGUtil.importCSV(msg, filenameFull + ".csv")
-    txtmsg = REMSGUtil.importTXT(msg, filenameFull + ".txt", 0)
-    jsonmsg = REMSGUtil.importJson(msg, filenameFull + ".json")
-    assert mmh3.hash(csvmsg.writeMSG()) == mmh3.hash(txtmsg.writeMSG()) == mmh3.hash(jsonmsg.writeMSG()) == mmh3.hash(msg.writeMSG())
-    # if not (mmh3.hash(csvmsg.writeMSG()) == mmh3.hash(txtmsg.writeMSG()) == mmh3.hash(jsonmsg.writeMSG()) == mmh3.hash(msg.writeMSG())):
-    #     print(filenameFull,len(csvmsg.writeMSG()),len(txtmsg.writeMSG()),len(jsonmsg.writeMSG()),len(msg.writeMSG()) )
-    #     # REMSGUtil.printHexView(csvmsg.writeMSG())
-    #     # REMSGUtil.printHexView(txtmsg.writeMSG())
-    #     # REMSGUtil.printHexView(jsonmsg.writeMSG())
-    #     # REMSGUtil.exportJson(csvmsg, filenameFull+".csv.json")
-    #     # REMSGUtil.exportJson(txtmsg, filenameFull+".txt.json")
-    #     # REMSGUtil.exportJson(jsonmsg, filenameFull+".json.json")
-    #     # REMSGUtil.exportMSG(csvmsg, filenameFull+".csv.new")
-    #     # REMSGUtil.exportMSG(txtmsg, filenameFull+".txt.new")
-    #     # REMSGUtil.exportMSG(jsonmsg, filenameFull+".json.new")
-    #     # REMSGUtil.exportMSG(msg, filenameFull+".ori.new")
-    if len(msg.entrys) > 1 and True:
-        csvmsg.entrys[0].langs[0] = "Modification魔改"
-        txtmsg.entrys[0].langs[0] = "Modification魔改"
-        jsonmsg.entrys[0].langs[0] = "Modification魔改"
-        REMSGUtil.exportCSV(csvmsg, filenameFull + ".mod.csv")
-        REMSGUtil.exportTXT(txtmsg, filenameFull + ".mod.txt", 0)
-        REMSGUtil.exportJson(jsonmsg, filenameFull + ".mod.json")
-
-        mcsvmsg = REMSGUtil.importCSV(msg, filenameFull + ".mod.csv")
-        mtxtmsg = REMSGUtil.importTXT(msg, filenameFull + ".mod.txt", 0)
-        mjsonmsg = REMSGUtil.importJson(msg, filenameFull + ".mod.json")
-        assert mmh3.hash(mcsvmsg.writeMSG()) == mmh3.hash(mtxtmsg.writeMSG()) == mmh3.hash(mjsonmsg.writeMSG())
-        REMSGUtil.exportMSG(mtxtmsg, filenameFull + ".mod.new")
-
-        modmsg = REMSGUtil.importMSG(filenameFull + ".mod.new")
-        modmsg.entrys[0].langs[0] = msg.entrys[0].langs[0]
-        REMSGUtil.exportMSG(modmsg, filenameFull + ".new")
-        newmsg = REMSGUtil.importMSG(filenameFull + ".new")
-        assert mmh3.hash(msg.writeMSG()) == mmh3.hash(newmsg.writeMSG())
-
-    REMSGUtil.printAllAttr(msg, filenameFull)
-    REMSGUtil.searchEntryName(msg, filenameFull, "ep_qn")
-    REMSGUtil.exportMHRTextDump(msg, filenameFull)
-    REMSGUtil.searchAttrTy(msg, filenameFull, -1)
-    REMSGUtil.searchSameGuid(msg)
-
-
 isValidMsgNameRegex = re.compile(r"\.msg.*(?<!\.txt)(?<!\.json)(?<!\.csv)$", re.IGNORECASE)
 def isValidMsgName(name: str) -> bool:
     return isValidMsgNameRegex.search(name) is not None
@@ -97,7 +49,6 @@ def worker(item, mode="csv", modFile: str = None, lang: int = REMSGUtil.SHORT_LA
         print("processing:" + filenameFull)
 
         msg = REMSGUtil.importMSG(filenameFull)
-        # DebugTest(msg,filenameFull)
 
         if mode == "csv":
             if modFile is None:
@@ -158,11 +109,6 @@ def getFolders(parser):
             parser.print_help()
             input("\nincorrect args, press enter to exit...")
             sys.exit()
-
-            # debug script input
-            # filenameList = getAllFileFromFolder(r"C:\MyProgram\REText\msgFiles")
-            # args.mode = "dump"
-            # filenameList = [r"C:\MyProgram\REText\msgFiles\nid004.msg.539100710",]
 
         # guessing input... why am I doing this
         elif len(remainder) == 1:
