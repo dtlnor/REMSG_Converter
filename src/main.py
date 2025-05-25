@@ -6,6 +6,7 @@ import sys
 
 import mmh3
 import REMSGUtil
+from typing import List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ def isValidMsgName(name: str) -> bool:
     return isValidMsgNameRegex.search(name) is not None
 
 
-def getAllFileFromFolder(folderName: str, filetype="msg"):
+def getAllFileFromFolder(folderName: str, filetype="msg") -> List[str]:
     filetype = filetype.lower()
     filenameList = []
     for file in os.listdir(folderName):
@@ -29,7 +30,7 @@ def getAllFileFromFolder(folderName: str, filetype="msg"):
     return filenameList
 
 
-def fillList(path: str, filetype="msg"):
+def fillList(path: str, filetype: str="msg") -> List[str]:
     path = os.path.abspath(path)
     filetype = filetype.lower()
     if os.path.isdir(path):
@@ -43,7 +44,7 @@ def fillList(path: str, filetype="msg"):
     return []
 
 
-def worker(item, mode="csv", modFile: str = None, lang: int = REMSGUtil.SHORT_LANG_LU["ja"], **kwargs):
+def worker(item: str, mode: str = "csv", modFile: str = None, lang: int = REMSGUtil.SHORT_LANG_LU["ja"], **kwargs) -> None:
     try:
         filenameFull = os.path.abspath(item)
         print("processing:" + filenameFull)
@@ -76,7 +77,7 @@ def worker(item, mode="csv", modFile: str = None, lang: int = REMSGUtil.SHORT_LA
         # print(traceback.format_exc())
         logger.exception(e)
 
-def getFolders(parser):
+def getFolders(parser: argparse.ArgumentParser) -> tuple[List[str], List[str]]:
     args = parser.parse_args()
 
     filenameList = []

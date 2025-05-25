@@ -4,7 +4,7 @@ import io
 import json
 import os
 import uuid
-from typing import Final
+from typing import Final, Iterator
 
 import chardet
 import mmh3
@@ -49,7 +49,7 @@ SHORT_LANG_LU: Final[dict[str, int]] = {
 }
 
 
-def searchSameGuid(msg: REMSG.MSG):
+def searchSameGuid(msg: REMSG.MSG) -> None:
     """research use, print out all entry name with same guid in one file"""
     guidset = set()
     for entry in msg.entrys:
@@ -59,7 +59,7 @@ def searchSameGuid(msg: REMSG.MSG):
             print(str(entry.guid) + ":" + entry.name)
 
 
-def searchGuid(msg: REMSG.MSG, guid: uuid.UUID):
+def searchGuid(msg: REMSG.MSG, guid: uuid.UUID) -> None:
     """research use, print out the entry name with that guid"""
     for entry in msg.entrys:
         if entry.guid.hex == guid.hex:
@@ -96,7 +96,7 @@ def getEncoding(filename: str, bufferSize: int = 256 * 1024) -> str:
     return encode
 
 
-def readAttributeFromStr(inValue: str | int | float, vtype: int):
+def readAttributeFromStr(inValue: str | int | float, vtype: int) -> str | int | float:
     """return the attribute value with correct data type"""
     value = ""
     match vtype:
@@ -111,7 +111,7 @@ def readAttributeFromStr(inValue: str | int | float, vtype: int):
     return value
 
 
-def printAllAttr(msg: REMSG.MSG, filenameFull: str):
+def printAllAttr(msg: REMSG.MSG, filenameFull: str) -> Iterator[str]:
     """
     Debug: return all attr for debug propose.
     """
@@ -123,7 +123,7 @@ def printAllAttr(msg: REMSG.MSG, filenameFull: str):
             yield ",".join((filenameFull, name, valueType, value))
 
 
-def searchAttrTy(msg: REMSG.MSG, filenameFull: str, ty: int):
+def searchAttrTy(msg: REMSG.MSG, filenameFull: str, ty: int) -> None:
     """
     Debug: search and print all attr's valueType if is ty type
     """
@@ -136,7 +136,7 @@ def searchAttrTy(msg: REMSG.MSG, filenameFull: str, ty: int):
                 print(",".join((filenameFull, name, str(valueType), value)))
 
 
-def searchEntryName(msg: REMSG.MSG, filename: str, keyword: str):
+def searchEntryName(msg: REMSG.MSG, filename: str, keyword: str) -> None:
     """
     Debug: search entry name if keyword in entry name
     """
@@ -145,7 +145,7 @@ def searchEntryName(msg: REMSG.MSG, filename: str, keyword: str):
             print(filename + "||" + entry.name)
 
 
-def exportCSV(msg: REMSG.MSG, filename: str):
+def exportCSV(msg: REMSG.MSG, filename: str) -> None:
     """write csv file from REMSG.MSG object"""
 
     # newline = \n, as the original string has \r\n already, set newline as \r\n will replace \r\n to \r\r\n
@@ -245,14 +245,14 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
     return msg
 
 
-def exportTXT(msg: REMSG.MSG, filename: str, langIndex: int, encode=None, withEntryName=False):
+def exportTXT(msg: REMSG.MSG, filename: str, langIndex: int, encode: str=None, withEntryName: bool=False) -> None:
     """write txt file from REMSG.MSG object with specified language"""
 
     with io.open(filename, "w", encoding=encode if encode is not None else "utf-8") as txtf:
         txtf.writelines([f"<string{'' if not withEntryName else "="+entry.name}>" + entry.langs[langIndex].replace("\r\n", "<lf>") + "\n" for entry in msg.entrys])
 
 
-def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode=None) -> REMSG.MSG:
+def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode: str=None) -> REMSG.MSG:
     """read txt file, modify the provided msg object, and return the new REMSG.MSG object"""
     if encode is None:
         encode = getEncoding(filename)
@@ -273,7 +273,7 @@ def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode=None) -> 
     return msg
 
 
-def exportMHRTextDump(msg: REMSG.MSG, filename: str, withEntryName=False):
+def exportMHRTextDump(msg: REMSG.MSG, filename: str, withEntryName: bool=False) -> None:
     """export all the content with all the language seperate by folders."""
 
     folder, file = os.path.split(filename)
@@ -331,14 +331,14 @@ def buildmhriceJson(msg: REMSG.MSG) -> dict:
     return infos
 
 
-def exportJson(msg: REMSG.MSG, filename: str):
+def exportJson(msg: REMSG.MSG, filename: str) -> None:
     """write mhrice like json file from REMSG.MSG object."""
 
     with io.open(filename, "w", encoding="utf-8") as jsonf:
         json.dump(buildmhriceJson(msg), jsonf, ensure_ascii=False, indent=2)
 
 
-def importJson(msgObj: REMSG.MSG, filename: str):
+def importJson(msgObj: REMSG.MSG, filename: str) -> REMSG.MSG:
     """read json file, and return the new REMSG.MSG object.
 
     @param msgObj: deprecated parameter, you may pass None for this.
@@ -390,7 +390,7 @@ def importMSG(filename: str) -> REMSG.MSG:
         return msg
 
 
-def exportMSG(msg: REMSG.MSG, filename: str):
+def exportMSG(msg: REMSG.MSG, filename: str) -> None:
     """write a msg file from a REMSG.MSG object"""
 
     with io.open(filename, "wb") as outstream:
