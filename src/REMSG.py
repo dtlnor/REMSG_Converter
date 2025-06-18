@@ -2,6 +2,7 @@ import io
 import struct
 import uuid
 from typing import Final
+import logging
 
 import mmh3
 import REWString as helper
@@ -344,7 +345,11 @@ class MSG:
             # set content by each lang
             lang = list()
             for strOffset in entry.contentOffsetsByLangs:
-                lang.append(helper.seekString((strOffset - dataOffset), stringDict))
+                try:
+                    lang.append(helper.seekString((strOffset - dataOffset), stringDict))
+                except AssertionError:
+                    logging.warning(f"error when seeking content for entry {entry.name} at lang {LANG_LIST[entry.contentOffsetsByLangs.index(strOffset)]}[{entry.contentOffsetsByLangs.index(strOffset)}] in offset {strOffset}.\n The content has been set to !!MsgNotFoundByREMSG!!")
+                    lang.append("!!MsgNotFoundByREMSG!!")
             entry.setContent(lang)
 
             # seek string value of each attribute
