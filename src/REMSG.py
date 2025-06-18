@@ -105,12 +105,14 @@ MHR_SUPPORTED_LANG: Final[list[int]] = [
 
 VERSION_2_LANG_COUNT: Final[dict[int, int]] = {
     12: 23,
-    0x2022033D: 27,
+    0x2022_033D: 27,
     14: 28,
     15: 30,
+    0x0030_0010E: 32,
+    0x0040_0010F: 32,
     17: 32,
     20: 33,
-    0x20220626: 33,  # before 13.0.0, 0x20220626 has 32 lang count
+    0x2022_0626: 33,  # before MHR 13.0.0, 0x20220626 has 32 lang count
     22: 33,
     23: 33,
 }
@@ -125,11 +127,11 @@ def isVersionEncrypt(version: int) -> bool:
 
 def isVersionEntryByHash(version: int) -> bool:
     """check if Entry haed index by hash"""
-    return version > 15 and version != 0x2022033D
+    return version > 15 and version != 0x2022_033D and version != 0x0040_0010F and version != 0x0030_0010E
 
 def isVersionIgnoreUnusedLang(version: int) -> bool:
     """check if version use -1 to ignore unused lang"""
-    return version >= 23 and version != 0x2022033D
+    return version >= 23 and version != 0x2022_033D and version != 0x0040_0010F and version != 0x0030_0010E
 
 class Entry:
     """meat of MSG"""
