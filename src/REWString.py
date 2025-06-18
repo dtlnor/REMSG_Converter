@@ -95,3 +95,55 @@ def toWcharBytes(string: str) -> bytes:
 
 # def StrDict2wcharPool(stringDict: dict[int, str]) -> bytes:
 #     return b''.join([toWcharBytes(s) for s in stringDict.values()])
+
+_DEFAULT_IGNORABLE_SET = frozenset(
+    {
+        0x06DD,
+        0x070F,
+        0x180E,
+        0xFEFF,
+        0xE0000,
+        0xE0001,
+        *range(0x0000, 0x0009),  # 0x0000-0x0008
+        *range(0x000E, 0x0020),  # 0x000E-0x001F
+        *range(0x007F, 0x0085),  # 0x007F-0x0084
+        *range(0x0086, 0x00A0),  # 0x0086-0x009F
+        *range(0x180B, 0x180E),  # 0x180B-0x180D
+        *range(0x200C, 0x2010),  # 0x200C-0x200F
+        *range(0x202A, 0x202F),  # 0x202A-0x202E
+        *range(0x2060, 0x2064),  # 0x2060-0x2063
+        *range(0x2064, 0x206A),  # 0x2064-0x2069
+        *range(0x206A, 0x2070),  # 0x206A-0x206F
+        *range(0xD800, 0xE000),  # 0xD800-0xDFFF
+        *range(0xFE00, 0xFE10),  # 0xFE00-0xFE0F
+        *range(0xFFF0, 0xFFF9),  # 0xFFF0-0xFFF8
+        *range(0xFFF9, 0xFFFC),  # 0xFFF9-0xFFFB
+        *range(0x1D173, 0x1D17B),  # 0x1D173-0x1D17A
+        *range(0xE0002, 0xE0020),  # 0xE0002-0xE001F
+        *range(0xE0020, 0xE0080),  # 0xE0020-0xE007F
+        *range(0xE0080, 0xE1000),  # 0xE0080-0xE0FFF
+    }
+)
+
+
+def isCharDI(char: str) -> bool:
+    """Check if character is Default Ignorable Code Point according to Unicode standard"""
+    return ord(char) in _DEFAULT_IGNORABLE_SET
+
+
+def isDI(text: str) -> bool:
+    """Check if string has Default Ignorable Code Point according to Unicode standard"""
+    if len(text) == 0:
+        return False
+    return any(isCharDI(char) for char in text)
+
+
+def escapeDI(text: str) -> str:
+    """Escape Default Ignorable Code Points to Unicode escape sequences"""
+    result = []
+    for char in text:
+        if isCharDI(char):
+            result.append(f"\\u{ord(char):04x}")
+        else:
+            result.append(char)
+    return "".join(result)
