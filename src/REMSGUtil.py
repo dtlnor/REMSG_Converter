@@ -4,6 +4,7 @@ import io
 import json
 import os
 import uuid
+import re
 from typing import Final, Iterator
 
 import chardet
@@ -264,7 +265,8 @@ def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode: str=None
     msg = copy.deepcopy(msgObj)
     lines = None
     with io.open(filename, mode="r", encoding=encode) as txtf:
-        lines = list([s.rstrip("\n").rstrip("\r").removeprefix("<string>").replace("<lf>", "\r\n") for s in txtf.readlines() if s.startswith("<string>")])
+        lines = list([re.sub(r'^<string(?:=[^>]*)?>', '', s.rstrip("\n").rstrip("\r").replace("<lf>", "\r\n"))
+            for s in txtf if s.startswith("<string")])
 
     assert len(lines) == len(msg.entrys), "Invalid number of entry"
     for i, entry in enumerate(msg.entrys):

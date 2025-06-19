@@ -59,7 +59,7 @@ def worker(item: str, mode: str = "csv", modFile: str = None, lang: int = REMSGU
 
         elif mode == "txt":
             if modFile is None:
-                REMSGUtil.exportTXT(msg, filenameFull + "." + mode, lang, encode=kwargs["txtformat"])
+                REMSGUtil.exportTXT(msg, filenameFull + "." + mode, lang, encode=kwargs["txtformat"], withEntryName=kwargs["entryName"])
             else:
                 REMSGUtil.exportMSG(msg=REMSGUtil.importTXT(msg, modFile, lang, encode=kwargs["txtformat"]), filename=filenameFull + ".new")
 
@@ -169,6 +169,8 @@ def main():
                         help="input the lang you want to export for txt mode (default ja)\n")
     parser.add_argument("-f", "--txtformat", type=str, default=None, choices=["utf-8", "utf-8-sig"],
                         help="force txt read/write format to be 'utf-8' or 'utf-8-sig'(BOM).\n")
+    parser.add_argument("-n", "--entryName", action='store_true', default=False,
+                        help="Also export the entry name to txt file.\n")
     parser.add_argument("args", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
@@ -177,7 +179,7 @@ def main():
     filenameList, editList = getFolders(parser)
 
     executor = concurrent.futures.ProcessPoolExecutor(args.multiprocess)
-    futures = [executor.submit(worker, file, mode=args.mode, modFile=edit, lang=REMSGUtil.SHORT_LANG_LU[args.lang], txtformat=args.txtformat) for file, edit in zip(filenameList, editList)]
+    futures = [executor.submit(worker, file, mode=args.mode, modFile=edit, lang=REMSGUtil.SHORT_LANG_LU[args.lang], txtformat=args.txtformat, entryName=args.entryName) for file, edit in zip(filenameList, editList)]
     concurrent.futures.wait(futures)
 
     print("All Done.")
