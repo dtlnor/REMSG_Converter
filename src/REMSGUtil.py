@@ -390,9 +390,14 @@ def importJson(msgObj: REMSG.MSG, filename: str) -> REMSG.MSG:
         mhriceJson = json.load(jsonf)
 
     msg.version = int(mhriceJson["version"])
-    if REMSG.isVersionIgnoreUnusedLang(msg.version):
-        msg.languages = mhriceJson["languages"]
+    if mhriceJson.get("languages") is not None:
+        if len(mhriceJson["languages"]) > 0:
+            msg.languages = mhriceJson["languages"]
+        else:
+            raise ValueError("language indexes should not be empty.")
     else:
+        if REMSG.isVersionIgnoreUnusedLang(msg.version):
+            raise ValueError("mhrice json file does not contain language indexes, but the version is not support language indexes autogen.")
         if len(mhriceJson["entries"]) > 0:
             msg.languages = list(range(len(mhriceJson["entries"][0]["content"])))
         else:
