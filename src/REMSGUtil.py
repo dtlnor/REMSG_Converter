@@ -54,16 +54,18 @@ SHORT_LANG_LU: Final[dict[str, int]] = {
 DI_WARNING: Final[str] = "\nPlease use an editor like VS Code to visualize and edit the output text carefully,\n to avoid issues during import/export with other format."
 
 
-def printDIWarning(msg: REMSG.MSG, langIndex=None) -> None:
+def printDIWarning(msg: REMSG.MSG, langIndex=None, detectAttrHead=True, detectEntryName=True, detectAttr=True) -> None:
     """print warning if there is any non-printable character in the msg"""
 
-    for i, attrHead in enumerate(msg.attributeHeaders):
-        if helper.isDI(attrHead["name"]):
-            logging.warning(f"Non-printable character in attributeName[{i}]={helper.escapeDI(attrHead['name'])}." + DI_WARNING)
+    if detectAttrHead:
+        for i, attrHead in enumerate(msg.attributeHeaders):
+            if helper.isDI(attrHead["name"]):
+                logging.warning(f"Non-printable character in attributeName[{i}]={helper.escapeDI(attrHead['name'])}." + DI_WARNING)
 
     for index, entry in enumerate(msg.entrys):
-        if helper.isDI(entry.name):
-            logging.warning(f"Non-printable character in entryName[{index}]={helper.escapeDI(entry.name)}." + DI_WARNING)
+        if detectEntryName:
+            if helper.isDI(entry.name):
+                logging.warning(f"Non-printable character in entryName[{index}]={helper.escapeDI(entry.name)}." + DI_WARNING)
 
         if langIndex is not None:
             if helper.isDI(entry.langs[langIndex]):
@@ -73,9 +75,10 @@ def printDIWarning(msg: REMSG.MSG, langIndex=None) -> None:
                 if helper.isDI(lang):
                     logging.warning(f"Non-printable character in entry {entry.name}[{REMSG.LANG_LIST[i]}]={(helper.escapeDI(lang))}." + DI_WARNING)
 
-        for attr, attrHead in zip(entry.attributes, msg.attributeHeaders):
-            if helper.isDI(str(attr)):
-                logging.warning(f"Non-printable character in entry {entry.name} attribute[{attrHead['name']}]={helper.escapeDI(str(attr))}." + DI_WARNING)
+        if detectAttr:
+            for attr, attrHead in zip(entry.attributes, msg.attributeHeaders):
+                if helper.isDI(str(attr)):
+                    logging.warning(f"Non-printable character in entry {entry.name} attribute[{attrHead['name']}]={helper.escapeDI(str(attr))}." + DI_WARNING)
 
 
 def searchSameGuid(msg: REMSG.MSG) -> None:
@@ -273,14 +276,14 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
 
     msg.entrys = newEntrys
 
-    printDIWarning(msg)
+    printDIWarning(msg, detectAttrHead=False)
     return msg
 
 
 def exportTXT(msg: REMSG.MSG, filename: str, langIndex: int, encode: str=None, withEntryName: bool=False) -> None:
     """write txt file from REMSG.MSG object with specified language"""
 
-    printDIWarning(msg, langIndex=langIndex)
+    printDIWarning(msg, langIndex=langIndex,  detectAttrHead=False, detectEntryName=withEntryName, detectAttr=False)
     with io.open(filename, "w", encoding=encode if encode is not None else "utf-8") as txtf:
         txtf.writelines([f"<string{'' if not withEntryName else "="+entry.name}>" + entry.langs[langIndex].replace("\r\n", "<lf>") + "\n" for entry in msg.entrys])
 
@@ -304,7 +307,7 @@ def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode: str=None
     for i, entry in enumerate(msg.entrys):
         entry.langs[langIndex] = lines[i]
 
-    printDIWarning(msg, langIndex=langIndex)
+    printDIWarning(msg, langIndex=langIndex, detectAttrHead=False, detectEntryName=False, detectAttr=False)
     return msg
 
 
