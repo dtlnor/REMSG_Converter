@@ -12,6 +12,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+errorFileList = {}
+
+
 isValidMsgNameRegex = re.compile(r"\.msg.*(?<!\.txt)(?<!\.json)(?<!\.csv)$", re.IGNORECASE)
 def isValidMsgName(name: str) -> bool:
     return isValidMsgNameRegex.search(name) is not None
@@ -76,6 +79,7 @@ def worker(item: str, mode: str = "csv", modFile: str = None, lang: int = REMSGU
         print(f"error with file {item}")
         # print(traceback.format_exc())
         logger.exception(e)
+        errorFileList[item] = str(e)
 
 def getFolders(parser: argparse.ArgumentParser) -> tuple[List[str], List[str]]:
     args = parser.parse_args()
@@ -176,11 +180,17 @@ def main():
 
     # print('\n'.join([REMSGUtil.LANG_LIST.get(v,f"lang_{v}")+": "+k for k, v in REMSGUtil.SHORT_LANG_LU.items()]))
 
+    errorFileList = {}
     filenameList, editList = getFolders(parser)
 
     executor = concurrent.futures.ProcessPoolExecutor(args.multiprocess)
     futures = [executor.submit(worker, file, mode=args.mode, modFile=edit, lang=REMSGUtil.SHORT_LANG_LU[args.lang], txtformat=args.txtformat, entryName=args.entryName) for file, edit in zip(filenameList, editList)]
     concurrent.futures.wait(futures)
+
+    if len(errorFileList) > 0:
+        print("Failed file summary:")
+        for file, error in errorFileList.items():
+            print(f"{file}: {error}")
 
     print("All Done.")
 
