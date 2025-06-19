@@ -240,9 +240,6 @@ class Entry:
         self.langs = langs
 
 
-DI_WARNING: Final[str] = "\nPlease use an editor like VS Code to visualize and edit the output text carefully,\n to avoid issues during import/export with other format."
-
-
 class MSG:
     """MSG object"""
 
@@ -341,17 +338,10 @@ class MSG:
         # read attribute name to attributeHeaders
         for i, attrHead in enumerate(attributeHeaders):
             attrHead["name"] = helper.seekString((attributeNamesOffsets[i] - dataOffset), stringDict)
-            if helper.isDI(attrHead["name"]):
-                self.hasDI = True
-                logging.warning(f"Non-printable character in attributeName[{i}]={helper.escapeDI(attrHead['name'])}." + DI_WARNING)
-
         # get content of each entry
         for entryIndex, entry in enumerate(entrys):
             # set entry name
             entry.setName(helper.seekString((entry.entryNameOffset - dataOffset), stringDict))
-            if helper.isDI(entry.name):
-                self.hasDI = True
-                logging.warning(f"Non-printable character in entryName[{entryIndex}]={(helper.escapeDI(entry.name))}." + DI_WARNING)
             if isVersionEntryByHash(version):
                 nameHash = mmh3.hash(key=entry.name.encode("utf-16-le"), seed=0xFFFFFFFF, signed=False)
                 assert nameHash == entry.hash, f"expected {entry.hash} for {entry.name} but get {nameHash}"
@@ -363,9 +353,6 @@ class MSG:
             for strOffset in entry.contentOffsetsByLangs:
                 try:
                     lang.append(helper.seekString((strOffset - dataOffset), stringDict))
-                    if helper.isDI(lang[-1]):
-                        self.hasDI = True
-                        logging.warning(f"Non-printable character in entry {entry.name}[{LANG_LIST[entry.contentOffsetsByLangs.index(strOffset)]}]={(helper.escapeDI(lang[-1]))}." + DI_WARNING)
                 except AssertionError:
                     logging.warning(f"error when seeking content for entry {entry.name} at lang {LANG_LIST[entry.contentOffsetsByLangs.index(strOffset)]}[{entry.contentOffsetsByLangs.index(strOffset)}] in offset {strOffset}.\n The content has been set to !!MsgNotFoundByREMSG!!")
                     lang.append("!!MsgNotFoundByREMSG!!")
@@ -375,9 +362,6 @@ class MSG:
             for i, attrHead in enumerate(attributeHeaders):
                 if attrHead["valueType"] == 2:
                     entry.attributes[i] = helper.seekString((entry.attributes[i] - dataOffset), stringDict)
-                    if helper.isDI(entry.attributes[i]):
-                        self.hasDI = True
-                        logging.warning(f"Non-printable character in entry {entry.name} attribute[{attrHead['name']}]={(helper.escapeDI(entry.attributes[i]))}." + DI_WARNING)
                 elif attrHead["valueType"] == -1:
                     temp = helper.seekString((entry.attributes[i] - dataOffset), stringDict)
                     assert temp == "" or temp == "\x00", f"attr value type -1 contain non-null value {temp}"

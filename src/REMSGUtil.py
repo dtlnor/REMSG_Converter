@@ -5,6 +5,7 @@ import json
 import os
 import uuid
 import re
+import logging
 from typing import Final, Iterator
 
 import chardet
@@ -48,6 +49,33 @@ SHORT_LANG_LU: Final[dict[str, int]] = {
     "es419": 32,  # "LatinAmericanSpanish",
     # "" : 33, # "Max",
 }
+
+
+DI_WARNING: Final[str] = "\nPlease use an editor like VS Code to visualize and edit the output text carefully,\n to avoid issues during import/export with other format."
+
+
+def printDIWarning(msg: REMSG.MSG, langIndex=None) -> None:
+    """print warning if there is any non-printable character in the msg"""
+
+    for i, attrHead in enumerate(msg.attributeHeaders):
+        if helper.isDI(attrHead["name"]):
+            logging.warning(f"Non-printable character in attributeName[{i}]={helper.escapeDI(attrHead['name'])}." + DI_WARNING)
+
+    for index, entry in enumerate(msg.entrys):
+        if helper.isDI(entry.name):
+            logging.warning(f"Non-printable character in entryName[{index}]={helper.escapeDI(entry.name)}." + DI_WARNING)
+
+        if langIndex is not None:
+            if helper.isDI(entry.langs[langIndex]):
+                logging.warning(f"Non-printable character in entry {entry.name}[{REMSG.LANG_LIST[langIndex]}]={helper.escapeDI(entry.langs[langIndex])}." + DI_WARNING)
+        else:
+            for i, lang in enumerate(entry.langs):
+                if helper.isDI(lang):
+                    logging.warning(f"Non-printable character in entry {entry.name}[{REMSG.LANG_LIST[i]}]={(helper.escapeDI(lang))}." + DI_WARNING)
+
+        for attr, attrHead in zip(entry.attributes, msg.attributeHeaders):
+            if helper.isDI(str(attr)):
+                logging.warning(f"Non-printable character in entry {entry.name} attribute[{attrHead['name']}]={helper.escapeDI(str(attr))}." + DI_WARNING)
 
 
 def searchSameGuid(msg: REMSG.MSG) -> None:
@@ -149,6 +177,7 @@ def searchEntryName(msg: REMSG.MSG, filename: str, keyword: str) -> None:
 def exportCSV(msg: REMSG.MSG, filename: str) -> None:
     """write csv file from REMSG.MSG object"""
 
+    printDIWarning(msg)
     # newline = \n, as the original string has \r\n already, set newline as \r\n will replace \r\n to \r\r\n
     with io.open(filename, "w", encoding="utf-8-sig", newline="\n") as csvf:
         writer = csv.writer(csvf, delimiter=",")
@@ -243,12 +272,15 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         newEntrys.append(entry)
 
     msg.entrys = newEntrys
+
+    printDIWarning(msg)
     return msg
 
 
 def exportTXT(msg: REMSG.MSG, filename: str, langIndex: int, encode: str=None, withEntryName: bool=False) -> None:
     """write txt file from REMSG.MSG object with specified language"""
 
+    printDIWarning(msg, langIndex=langIndex)
     with io.open(filename, "w", encoding=encode if encode is not None else "utf-8") as txtf:
         txtf.writelines([f"<string{'' if not withEntryName else "="+entry.name}>" + entry.langs[langIndex].replace("\r\n", "<lf>") + "\n" for entry in msg.entrys])
 
@@ -272,6 +304,7 @@ def importTXT(msgObj: REMSG.MSG, filename: str, langIndex: int, encode: str=None
     for i, entry in enumerate(msg.entrys):
         entry.langs[langIndex] = lines[i]
 
+    printDIWarning(msg, langIndex=langIndex)
     return msg
 
 
@@ -336,6 +369,7 @@ def buildmhriceJson(msg: REMSG.MSG) -> dict:
 def exportJson(msg: REMSG.MSG, filename: str) -> None:
     """write mhrice like json file from REMSG.MSG object."""
 
+    printDIWarning(msg)
     with io.open(filename, "w", encoding="utf-8") as jsonf:
         json.dump(buildmhriceJson(msg), jsonf, ensure_ascii=False, indent=2)
 
@@ -380,6 +414,8 @@ def importJson(msgObj: REMSG.MSG, filename: str) -> REMSG.MSG:
         newEntrys.append(entry)
 
     msg.entrys = newEntrys
+
+    printDIWarning(msg)
     return msg
 
 
