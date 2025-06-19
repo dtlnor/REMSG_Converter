@@ -240,7 +240,7 @@ class Entry:
         self.langs = langs
 
 
-DI_WARNING: Final[str] = "\nThis may cause issues during import/export with other format.\nPlease use an editor like VS Code to visualize and edit it carefully."
+DI_WARNING: Final[str] = "\nPlease use an editor like VS Code to visualize and edit the output text carefully,\n to avoid issues during import/export with other format."
 
 
 class MSG:
