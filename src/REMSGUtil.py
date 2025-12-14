@@ -81,22 +81,21 @@ def printDIWarning(msg: REMSG.MSG, langIndex=None, detectAttrHead=True, detectEn
                     logging.warning(f"Non-printable character in entry {entry.name} attribute[{attrHead['name']}]={helper.escapeDI(str(attr))}." + DI_WARNING)
 
 
-def searchSameGuid(msg: REMSG.MSG) -> None:
-    """research use, print out all entry name with same guid in one file"""
+def searchSameGuid(msg: REMSG.MSG) -> Iterator[str]:
+    """research use, return all entry name with same guid in one file"""
     guidset = set()
     for entry in msg.entrys:
         if entry.guid not in guidset:
             guidset.add(entry.guid)
         else:
-            print(str(entry.guid) + ":" + entry.name)
+            yield str(entry.guid) + ":" + entry.name
 
 
-def searchGuid(msg: REMSG.MSG, guid: uuid.UUID) -> None:
-    """research use, print out the entry name with that guid"""
+def searchGuid(msg: REMSG.MSG, guid: uuid.UUID) -> Iterator[str]:
+    """research use, return all entry name with that guid"""
     for entry in msg.entrys:
         if entry.guid.hex == guid.hex:
-            print(str(entry.guid) + ":" + entry.name)
-
+            yield str(entry.guid) + ":" + entry.name
 
 def getEncoding(filename: str, bufferSize: int = 256 * 1024) -> str:
     """althoguh I set utf-8 to all output file, but in-case someone copy paste to another file and has diff encoding..."""
@@ -143,7 +142,7 @@ def readAttributeFromStr(inValue: str | int | float, vtype: int) -> str | int | 
     return value
 
 
-def printAllAttr(msg: REMSG.MSG, filenameFull: str) -> Iterator[str]:
+def searchAllAttr(msg: REMSG.MSG, filenameFull: str) -> Iterator[str]:
     """
     Debug: return all attr for debug propose.
     """
@@ -155,9 +154,9 @@ def printAllAttr(msg: REMSG.MSG, filenameFull: str) -> Iterator[str]:
             yield ",".join((filenameFull, name, valueType, value))
 
 
-def searchAttrTy(msg: REMSG.MSG, filenameFull: str, ty: int) -> None:
+def searchAttrTy(msg: REMSG.MSG, filenameFull: str, ty: int) -> Iterator[str]:
     """
-    Debug: search and print all attr's valueType if is ty type
+    Debug: return all attr's valueType if is ty type
     """
     for entry in msg.entrys:
         for j, x in enumerate(entry.attributes):
@@ -165,16 +164,16 @@ def searchAttrTy(msg: REMSG.MSG, filenameFull: str, ty: int) -> None:
             valueType = int(msg.attributeHeaders[j]["valueType"])
             if valueType == ty:
                 value = '"' + str(x) + '"'
-                print(",".join((filenameFull, name, str(valueType), value)))
+                yield ",".join((filenameFull, name, str(valueType), value))
 
 
-def searchEntryName(msg: REMSG.MSG, filename: str, keyword: str) -> None:
+def searchEntryName(msg: REMSG.MSG, filename: str, keyword: str) -> Iterator[str]:
     """
-    Debug: search entry name if keyword in entry name
+    Debug: return all entry name if keyword in entry name
     """
     for entry in msg.entrys:
         if keyword in entry.name:
-            print(filename + "||" + entry.name)
+            yield filename + "||" + entry.name
 
 
 def exportCSV(msg: REMSG.MSG, filename: str) -> None:
