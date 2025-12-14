@@ -109,14 +109,14 @@ VERSION_2_LANG_COUNT: Final[dict[int, int]] = {
     0x2022_033D: 27,
     14: 28,
     15: 30,
-    0x0030_0010E: 33,
-    0x0040_0010F: 33,
+    0x0100_010C: 33,
+    0x0300_010E: 33,
+    0x0400_010F: 33,
     17: 32,
     20: 33,
     0x2022_0626: 33,  # before MHR 13.0.0, 0x20220626 has 32 lang count
     22: 33,
     23: 33,
-    0x1000_10C: 33,
 }
 """lang count in each msg version.
 0x20220626 has 32 lang count in early version"""
@@ -124,17 +124,17 @@ VERSION_2_LANG_COUNT: Final[dict[int, int]] = {
 
 def isVersionEncrypt(version: int) -> bool:
     """check if dataOffset exist"""
-    return version > 12 and version != 0x2022033D and version != 0x1000_10C
+    return version > 12 and version != 0x2022033D and version != 0x0100_010C
 
 
 def isVersionEntryByHash(version: int) -> bool:
     """check if Entry haed index by hash"""
-    return version > 15 and version != 0x2022_033D and version != 0x0040_0010F and version != 0x0030_0010E and version != 0x1000_10C
+    return version > 15 and version != 0x2022_033D and version != 0x0100_010C and version != 0x0300_010E and version != 0x0400_010F
 
 
 def isVersionIgnoreUnusedLang(version: int) -> bool:
     """check if version use -1 to ignore unused lang"""
-    return version >= 23 and version != 0x2022_033D and version != 0x0040_0010F and version != 0x0030_0010E
+    return version >= 23 and version != 0x2022_033D and version != 0x0100_010C and version != 0x0300_010E and version != 0x0400_010F
 
 
 class Entry:
