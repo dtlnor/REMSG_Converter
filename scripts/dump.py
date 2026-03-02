@@ -12,6 +12,36 @@ import REMSGUtil
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+import json
+
+ENUM_FILE = R"..\MHWs-in-json\Enums_Internal.json"
+ENEMY_COUNT_FILE = R"..\MHWs-in-json\natives\STM\GameDesign\Common\Text\EnemyCountData.user.3.json"
+
+enum_data: dict = {}
+enemy_count_index: dict = {}
+
+# Maps message language id → EnemyCountData field name
+LANG_TO_COUNTTYPE_FIELD: dict[str, str] = {
+    "ja":   "_CountTypeJP",
+    "ko":   "_CountTypeKO",
+    "zhtw": "_CountTypeTW",
+    "zhcn": "_CountTypeCN",
+}
+
+
+def load_global_data():
+    global enum_data, enemy_count_index
+    with open(ENUM_FILE, "r", encoding="utf-8") as f:
+        enum_data = json.load(f)
+    with open(ENEMY_COUNT_FILE, "r", encoding="utf-8") as f:
+        enemy_count_data = json.load(f)
+    # Build a fast lookup: stripped EM id → cData dict
+    re_strip_prefix = re.compile(r"^\[.*?\]")
+    for item in enemy_count_data[0]["app.user_data.EnemyCountData"]["_Values"]:
+        cdata = item["app.user_data.EnemyCountData.cData"]
+        em_id = re_strip_prefix.sub("", cdata["_EnemyId"])
+        enemy_count_index[em_id] = cdata
+
 
 isValidMsgNameRegex = re.compile(r"\.msg.*(?<!\.txt)(?<!\.json)(?<!\.csv)$", re.IGNORECASE)
 
@@ -98,45 +128,76 @@ def getFolders(infolder: str, outfolder: str = None):
     return filenameList, outfileList
 
 
-re_xref_id = re.compile(r"(<[Rr][Ee][Ff] (.*?)>)")
-re_xref_em_id = re.compile(r"(<EMID (.*?)>)")
-re_xref_em_ct = re.compile(r"(<EMCT (.*?)>)")
+re_xref_id = re.compile(r"((?<!&)<[Rr][Ee][Ff] (.*?)(?<!&)>)")
+re_xref_em_id = re.compile(r"((?<!&)<EMID (.*?)(?<!&)>)")
+re_xref_em_jp = re.compile(r"((?<!&)<EMIDJP (.*?)(?<!&)>)")
+re_xref_em_ct = re.compile(r"((?<!&)<EMCT (.*?)(?<!&)>)")
+# re_text_remain = re.compile(r"((?<!&)<(?!/?(?:EMID|EMIDJP|EMCT|[Rr][Ee][Ff]|C[Oo][Ll][Oo][Rr]|ICON|EMPARAM|STYLE|BOLD|ITALIC|LSNR|INPUTMSG|SPKR|PLNAME|OTNAME|PLURAL|PLATMSG|NUMBER|FSR|XESS|DLSS|OPTION|DATETIME|[rR][tT][lL]|[lL][tT][rR]|CENTER|a|LOWER|LEFT|VARIOUS|Accent|BLS)[\s>])(.*?)(?<!&)>)")
+re_count_num = re.compile(r"COUNT_(\d+)$")
+
+
+def _make_emid_tag(xref_name: str, _: str) -> str:
+    if "EM0070_00_0 CLB_01" in xref_name:
+        return "EnemyText_EXTRA_NAME_EM0070_00_0"
+    if "EM0150_00_0 EX" in xref_name or 'EM0150_00_0 "EX"' in xref_name:
+        return "EnemyText_EXTRA_NAME_EM0150_00_0"
+    if " FR" in xref_name:
+        return f"EnemyText_FRENZY_NAME_{xref_name.split()[0]}"
+    return f"EnemyText_NAME_{xref_name}"
+
+
+def _make_emct_tag(xref_name: str, lang_id: str) -> str | None:
+    count_field = LANG_TO_COUNTTYPE_FIELD.get(lang_id)
+    if count_field is None:
+        return None
+    cdata = enemy_count_index.get(xref_name)
+    if cdata is None:
+        logger.warning(f"Enemy count data not found for EM id: {xref_name}")
+        return None
+    m = re_count_num.search(cdata.get(count_field, ""))
+    if not m:
+        logger.warning(f"Count type not found in enemy count data for EM id: {xref_name}")
+        return None
+    return f"Localize_0000_{int(m.group(1)):03d}"
+
+
+_XREF_RESOLVERS = [
+    (re_xref_id,    lambda name, _: name),
+    (re_xref_em_id, _make_emid_tag),
+    (re_xref_em_jp, lambda name, _: f"EnemyText_JP_NAME_{name}"),
+    (re_xref_em_ct, _make_emct_tag),
+]
 
 
 def process_xref(db_entries: dict[str, dict]) -> dict[str, dict]:
-    for entry in db_entries.values():
-        new_entry = replace_xref_tag_in_entry(entry, db_entries)
-        db_entries[entry["name"]] = new_entry
+    name_index = {entry["name"]: entry for entry in db_entries.values()}
+    for guid, entry in list(db_entries.items()):
+        db_entries[guid] = replace_xref_tag_in_entry(entry, name_index)
     return db_entries
 
 
-def replace_xref_tag_in_entry(entry: dict, db_entries: dict[str, dict]) -> dict:
-    for i, content in entry["contents"].items():
-        content = replace_xref_tag_in_content(content, i, db_entries)
-        entry["contents"][i] = content
+def replace_xref_tag_in_entry(entry: dict, name_index: dict[str, dict]) -> dict:
+    for i, content in entry["content"].items():
+        entry["content"][i] = replace_xref_tag_in_content(content, i, name_index)
     return entry
 
 
-def replace_xref_tag_in_content(content: str, lang_id: int, db_entries: dict[str, dict]) -> str:
-    line = content
-    xrefs = re_xref_id.findall(line)
-    for xref in xrefs:
-        xref_tag = xref[0]
-        xref_name = xref[1]
-        xref_entry = db_entries.get(xref_name)
-        if xref_entry:
-            line = line.replace(xref_tag, xref_entry["contents"][lang_id], 1)
-            line = replace_xref_tag_in_content(line, lang_id, db_entries)
-    xrefs = re_xref_em_id.findall(line)
-    for xref in xrefs:
-        xref_tag = xref[0]
-        xref_name = xref[1]
-        tag = f"EnemyText_NAME_{xref_name}"
-        xref_entry = db_entries.get(tag)
-        if xref_entry:
-            line = line.replace(xref_tag, xref_entry["contents"][lang_id], 1)
-            line = replace_xref_tag_in_content(line, lang_id, db_entries)
-    return line
+def replace_xref_tag_in_content(content: str, lang_id: str, name_index: dict[str, dict], _seen: frozenset = frozenset()) -> str:
+    for xref_regex, tag_fn in _XREF_RESOLVERS:
+        for xref_tag, xref_name in xref_regex.findall(content):
+            if "{" in xref_name or "}" in xref_name:
+                continue
+            tag = tag_fn(xref_name, lang_id)
+            if tag is None or tag in _seen:
+                continue
+            entry = name_index.get(tag)
+            if entry:
+                return replace_xref_tag_in_content(
+                    content.replace(xref_tag, entry["content"][lang_id], 1),
+                    lang_id, name_index, _seen | {tag},
+                )
+            logger.warning(f"Xref entry not found: {tag!r} (from {xref_tag!r})")
+    return content
 
 
 SHORT_LANG_LU_REV = {REMSGUtil.SHORT_LANG_LU[k]: k for k in REMSGUtil.SHORT_LANG_LU}
@@ -144,8 +205,8 @@ SHORT_LANG_LU_REV = {REMSGUtil.SHORT_LANG_LU[k]: k for k in REMSGUtil.SHORT_LANG
 
 def all_in_one_worker(item, folderprefix, versionsuffix):
     try:
-        filenameFull = os.path.abspath(item)
-        print("processing:" + filenameFull)
+        filenameFull = Path(item).absolute()
+        print("processing:" + str(filenameFull))
 
         msg = REMSGUtil.importJson(None, filenameFull)
         # DebugTest(msg,filenameFull)
@@ -160,7 +221,7 @@ def all_in_one_worker(item, folderprefix, versionsuffix):
                 continue
             attrIdx[i] = attr["name"]
 
-        relative_path = Path(filenameFull).relative_to(folderprefix)
+        relative_path = filenameFull.relative_to(folderprefix)
         belongs_to = str(relative_path.as_posix()).removesuffix(versionsuffix)
 
         for entries in data["entries"]:
@@ -183,7 +244,7 @@ def all_in_one_worker(item, folderprefix, versionsuffix):
 
 
 def dumpAllInOneJson(filenameList: list, outputfile, folderprefix: str = None, versionsuffix: str = None):
-    import json
+    load_global_data()
 
     # filenameList = getAllFileFromFolder(folder, 'msg')
 
@@ -207,27 +268,6 @@ def dumpAllInOneJson(filenameList: list, outputfile, folderprefix: str = None, v
         json.dump(allinone, f, ensure_ascii=False, indent=4)
 
 
-def dump_text_db(filenameList: list, outputfile):
-    import json
-
-    executor = concurrent.futures.ProcessPoolExecutor(4)
-    futures = [executor.submit(all_in_one_worker, file) for file in filenameList]
-    concurrent.futures.wait(futures)
-
-    allinone = {}
-
-    # merge all json return from futures into one
-    for future in futures:
-        allinone.update(future.result())
-
-    # sort by "name"
-    allinone = dict(sorted(allinone.items(), key=lambda item: item[1]["name"]))
-
-    # dump allinone
-    with open(outputfile, "w", encoding="utf-8") as f:
-        json.dump(allinone, f, ensure_ascii=False, indent=4)
-
-
 if __name__ == "__main__":
     # import threading
     import concurrent.futures
@@ -240,13 +280,13 @@ if __name__ == "__main__":
     outfolder = R"G:\MHWs\msg\natives\STM"
 
     ####################################################
-    # dump all json files in folder
-    filenameList, editList = getFolders(infolder, outfolder)
+    # # dump all json files in folder
+    # filenameList, editList = getFolders(infolder, outfolder)
 
-    multiprocess = 4
-    executor = concurrent.futures.ProcessPoolExecutor(multiprocess)
-    futures = [executor.submit(worker, file, outfile=edit) for file, edit in zip(filenameList, editList)]
-    concurrent.futures.wait(futures)
+    # multiprocess = 4
+    # executor = concurrent.futures.ProcessPoolExecutor(multiprocess)
+    # futures = [executor.submit(worker, file, outfile=edit) for file, edit in zip(filenameList, editList)]
+    # concurrent.futures.wait(futures)
 
     ####################################################
     # # dump all txt and csv files in folder
@@ -272,8 +312,9 @@ if __name__ == "__main__":
     ###################################################
     # import all json files in folder and dump all in one json
 
-    infolder = R"..\MHWs-in-json\natives\STM"
+    infolder = Path(R"..\MHWs-in-json\natives\STM").absolute()
     filenameList = [os.path.join(dp, f) for dp, dn, filenames in os.walk(infolder) for f in filenames if f.endswith(".msg.23.json")]
-    dumpAllInOneJson(filenameList, R"..\dtlnor-mhws-scripts\1.030.msg.json", folderprefix=infolder, versionsuffix=".23.json")
+    dumpAllInOneJson(filenameList, R"..\dtlnor-mhws-scripts\1.041.msg.json", folderprefix=infolder, versionsuffix=".23.json")
 
+    ###################################################
     print("All Done.")
