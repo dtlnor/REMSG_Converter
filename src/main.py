@@ -1,12 +1,12 @@
 import argparse
 import logging
-import os
 import re
 import sys
 
 import mmh3
 import REMSGUtil
 from typing import List
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,36 +20,32 @@ def isValidMsgName(name: str) -> bool:
     return isValidMsgNameRegex.search(name) is not None
 
 
-def getAllFileFromFolder(folderName: str, filetype="msg") -> List[str]:
+def getAllFileFromFolder(folder: Path, filetype: str = "msg") -> List[Path]:
     filetype = filetype.lower()
-    filenameList = []
-    for file in os.listdir(folderName):
-        if filetype == "msg":
-            if isValidMsgName(file):
-                filenameList.append(os.path.join(folderName, file))
-        elif file.lower().endswith("." + filetype) and ".msg." in file.lower():
-            filenameList.append(os.path.join(folderName, file))
-
-    return filenameList
+    if filetype == "msg":
+        return [f for f in folder.rglob("*") if f.is_file() and isValidMsgName(f.name)]
+    else:
+        return [f for f in folder.rglob(f"*.{filetype}") if f.is_file() and ".msg." in f.name.lower()]
 
 
-def fillList(path: str, filetype: str="msg") -> List[str]:
-    path = os.path.abspath(path)
+def fillList(inpath: str | Path, filetype: str = "msg") -> List[Path]:
+    path = Path(inpath).resolve()
     filetype = filetype.lower()
-    if os.path.isdir(path):
+    if path.is_dir():
         return getAllFileFromFolder(path, filetype)
-    elif os.path.isfile(path):
+    elif path.is_file():
         if filetype == "msg":
-            if isValidMsgName(path):
-                return [path,]
-        elif path.lower().endswith("." + filetype):
-            return [path,]
+            if isValidMsgName(path.name):
+                return [path]
+        elif path.suffix.lower() == "." + filetype:
+            return [path]
     return []
 
 
-def worker(item: str, mode: str = "csv", modFile: str = None, lang: int = REMSGUtil.SHORT_LANG_LU["ja"], **kwargs) -> None:
+def worker(item: Path, mode: str = "csv", modFile: Path | None = None, lang: int = REMSGUtil.SHORT_LANG_LU["ja"], **kwargs) -> None:
     try:
-        filenameFull = os.path.abspath(item)
+        filenameFull = str(item.resolve())
+        modFile = str(modFile.resolve()) if modFile is not None else None
         print("processing:" + filenameFull)
 
         msg = REMSGUtil.importMSG(filenameFull)
@@ -81,7 +77,7 @@ def worker(item: str, mode: str = "csv", modFile: str = None, lang: int = REMSGU
         logger.exception(e)
         errorFileList[item] = str(e)
 
-def getFolders(parser: argparse.ArgumentParser) -> tuple[List[str], List[str]]:
+def getFolders(parser: argparse.ArgumentParser) -> tuple[List[Path], List[Path | None]]:
     args = parser.parse_args()
 
     filenameList = []
@@ -99,11 +95,11 @@ def getFolders(parser: argparse.ArgumentParser) -> tuple[List[str], List[str]]:
         editList = fillList(args.edit, args.mode)
         # fill file list by edit list
         for file in list(editList):
-            filename, file_extension = os.path.splitext(file)
-            if os.path.exists(filename):
-                filenameList.append(filename)
+            msg_file = file.stem
+            if msg_file.exists():
+                filenameList.append(msg_file)
             else:
-                print(f"{filename} not found, skiping this file...")
+                print(f"{msg_file} not found, skiping this file...")
                 editList.remove(file)
 
     else:  # input is none
@@ -132,18 +128,17 @@ def getFolders(parser: argparse.ArgumentParser) -> tuple[List[str], List[str]]:
 
     # after getting file list...
     if len(editList) <= 0:
-        editList = list([None for _ in filenameList])
+        editList = [None for _ in filenameList]
     elif len(editList) > 1:
-        editfolder, name = os.path.split(editList[0])
+        editfolder = editList[0].parent
         editList = []
-        editFiles = dict([(f.lower(), f) for f in os.listdir(editfolder)])
+        editFiles = {f.name.lower(): f for f in editfolder.iterdir()}
         # find valid file - edit pair
-        for file in list(filenameList):
-            msgfolder, name = os.path.split(file)
-            if (name + "." + args.mode).lower() in editFiles:
-                editList.append(os.path.join(editfolder, editFiles[(name + "." + args.mode).lower()]))
+        for file in filenameList:
+            if (file.name + "." + args.mode).lower() in editFiles:
+                editList.append(editFiles[(file.name + "." + args.mode).lower()])
             else:
-                print(f"{name}.{args.mode} not found, skiping this file...")
+                print(f"{file.name}.{args.mode} not found, skiping this file...")
                 filenameList.remove(file)
 
     if len(filenameList) <= 0:
