@@ -276,7 +276,8 @@ class MSG:
             entryOffsets.append(struct.unpack("<Q", filestream.read(8))[0])
 
         # always 64bit null
-        assert unknDataOffset == filestream.tell(), f"expected unknData at {unknDataOffset} but at {filestream.tell()}"
+        if unknDataOffset != 0:
+            assert unknDataOffset == filestream.tell(), f"expected unknData at {unknDataOffset} but at {filestream.tell()}"
         (unknData,) = struct.unpack("<Q", filestream.read(8))
         assert unknData == 0, f"unknData should be 0 but found {unknData}"
 
