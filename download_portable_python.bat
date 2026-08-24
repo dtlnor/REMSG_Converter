@@ -2,8 +2,8 @@
 REM Make a portable python environment in ./python
 
 REM Version info
-set PYTHON_VERSION=3.12.7
-set PYTHON_VER_SHORT=312
+set PYTHON_VERSION=3.14.7
+set PYTHON_VER_SHORT=314
 
 REM Delete ./python if exist
 if exist python rmdir /s python
@@ -28,32 +28,9 @@ robocopy Lib\site-packages\chardet chardet /E
 copy Lib\site-packages\mmh3.cp%PYTHON_VER_SHORT%-win_amd64.pyd .
 rmdir /s /q Lib Scripts
 del get-pip.py
-cd chardet
-rmdir /s /q __pycache__ cli metadata\__pycache__
-cd ..
 
-REM Remove unnecessary files
-del pythonw.exe python.cat python%PYTHON_VER_SHORT%._pth
-del python3.dll libcrypto-1_1.dll libssl-1_1.dll libcrypto-3.dll libssl-3.dll sqlite3.dll
-del vcruntime140.dll vcruntime140_1.dll
-del _asyncio.pyd _bz2.pyd _decimal.pyd _elementtree.pyd _hashlib.pyd
-del _lzma.pyd _msi.pyd _overlapped.pyd _queue.pyd
-del _sqlite3.pyd _ssl.pyd _zoneinfo.pyd
-del pyexpat.pyd unicodedata.pyd winsound.pyd
-
-REM Remove unnecessary files from pythonXXX.zip
-powershell Expand-Archive -Force -Path python%PYTHON_VER_SHORT%.zip
-cd python%PYTHON_VER_SHORT%
-rmdir /s /q __phello__ curses dbm html http lib2to3 msilib
-rmdir /s /q pydoc_data site-packages sqlite3 tomllib urllib
-rmdir /s /q wsgiref xml xmlrpc zoneinfo
-del ast.pyc calendar.pyc doctest.pyc ftplib.pyc
-del imaplib.pyc ipaddress.pyc mailbox.pyc nntplib.pyc
-del optparse.pyc pdb.pyc pickletools.pyc pydoc.pyc
-del smtpd.pyc smtplib.pyc ssl.pyc tarfile.pyc
-powershell Compress-Archive -Force -Path * -Destination ../python%PYTHON_VER_SHORT%.zip
-cd ..
-rmdir /s /q python%PYTHON_VER_SHORT%
+REM Remove path config file
+del python%PYTHON_VER_SHORT%._pth
 cd ..
 
 REM Rename folder
