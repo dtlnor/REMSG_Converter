@@ -217,7 +217,10 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         # for row in rows:
         #     print(row)
         guididx = rows[0].index("guid")
-        soundIdx = rows[0].index("soundId")
+        if "soundId" in rows[0]:
+            soundidx = rows[0].index("soundId")
+        else:
+            soundidx = rows[0].index("crc?")
         nameidx = rows[0].index("entry name")
         attridxs = list([i for i, field in enumerate(rows[0]) if field.startswith("<") and field.endswith(">")])
         fAttrList = list([rows[0][idx].removeprefix("<").removesuffix(">") for idx in attridxs])
@@ -247,7 +250,7 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         assert len(contents) == langCount, f"Invalid number of language / contents.\n{"\n".join(contents)}"
         entry.buildEntry(
             guid=fEntry[guididx],
-            soundId=int(fEntry[soundIdx]),
+            soundId=int(fEntry[soundidx]),
             name=fEntry[nameidx],
             attributeValues=attributes,
             langs=[helper.forceWindowsLineBreak(content) for content in contents],
@@ -408,9 +411,12 @@ def importJson(msgObj: REMSG.MSG, filename: str) -> REMSG.MSG:
     newEntrys: list[REMSG.Entry] = list()
     for jIndex, jEntry in enumerate(mhriceJson["entries"]):
         entry = REMSG.Entry(msg.version)  # create a new one.
+        soundId = jEntry.get("soundId", jEntry.get("crc?"))
+        if soundId is None:
+            raise ValueError(f"soundId not found in entry {jEntry['name']}")
         entry.buildEntry(
             guid=jEntry["guid"],
-            soundId=jEntry["soundId"],
+            soundId=soundId,
             name=jEntry["name"],
             attributeValues=list([readAttributeFromStr(next(iter(attr.values())), msg.attributeHeaders[i]["valueType"]) for i, attr in enumerate(jEntry["attributes"])]),
             langs=list([helper.forceWindowsLineBreak(content) for content in jEntry["content"]]),
