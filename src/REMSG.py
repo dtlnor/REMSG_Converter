@@ -150,7 +150,7 @@ class Entry:
         self.guid = uuid.UUID(
             bytes_le=struct.unpack("<16s", filestream.read(16))[0],
         )
-        (self.crc,) = struct.unpack("<I", filestream.read(4))
+        (self.soundId,) = struct.unpack("<I", filestream.read(4))
         # actually I don't have a version 16 msg file so idk if 16 use hash or index
         if isVersionEntryByHash(self.version):
             (self.hash,) = struct.unpack("<I", filestream.read(4))
@@ -167,7 +167,7 @@ class Entry:
     def writeHead(self, bytestream: bytearray):
         """extend the bytearray by filling entry head"""
         bytestream.extend(struct.pack("<16s", self.guid.bytes_le))
-        bytestream.extend(struct.pack("<I", self.crc))
+        bytestream.extend(struct.pack("<I", self.soundId))
         if isVersionEntryByHash(self.version):
             bytestream.extend(struct.pack("<I", self.hash))
         else:
@@ -224,10 +224,10 @@ class Entry:
         """set entry contents"""
         self.langs = langs
 
-    def buildEntry(self, guid: str, crc: int, name: str, attributeValues: list, langs: list[str], hash: int = 0, index: int = 0):
+    def buildEntry(self, guid: str, soundId: int, name: str, attributeValues: list, langs: list[str], hash: int = 0, index: int = 0):
         """use for file modification"""
         self.guid = uuid.UUID(hex=guid)
-        self.crc = crc
+        self.soundId = soundId
         if isVersionEntryByHash(self.version):
             self.hash = hash
         else:

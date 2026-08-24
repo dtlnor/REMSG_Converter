@@ -184,14 +184,14 @@ def exportCSV(msg: REMSG.MSG, filename: str) -> None:
     with io.open(filename, "w", encoding="utf-8-sig", newline="\n") as csvf:
         writer = csv.writer(csvf, delimiter=",")
         writer.writerow(
-            ["guid", "crc?"]
+            ["guid", "soundId"]
             + ["<" + x["name"] + ">" for x in msg.attributeHeaders]
             + ["entry name",]
             + [REMSG.LANG_LIST.get(lang, f"lang_{lang}") for lang in msg.languages]
         )
         for entry in msg.entrys:
             writer.writerow(
-                [str(x) for x in (entry.guid, entry.crc)]
+                [str(x) for x in (entry.guid, entry.soundId)]
                 + [str(x) for x in entry.attributes]
                 + [entry.name,]
                 + entry.langs
@@ -217,7 +217,7 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         # for row in rows:
         #     print(row)
         guididx = rows[0].index("guid")
-        crcidx = rows[0].index("crc?")
+        soundIdx = rows[0].index("soundId")
         nameidx = rows[0].index("entry name")
         attridxs = list([i for i, field in enumerate(rows[0]) if field.startswith("<") and field.endswith(">")])
         fAttrList = list([rows[0][idx].removeprefix("<").removesuffix(">") for idx in attridxs])
@@ -247,7 +247,7 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
         assert len(contents) == langCount, f"Invalid number of language / contents.\n{"\n".join(contents)}"
         entry.buildEntry(
             guid=fEntry[guididx],
-            crc=int(fEntry[crcidx]),
+            soundId=int(fEntry[soundIdx]),
             name=fEntry[nameidx],
             attributeValues=attributes,
             langs=[helper.forceWindowsLineBreak(content) for content in contents],
@@ -257,7 +257,7 @@ def importCSV(msgObj: REMSG.MSG, filename: str, version: int = None, langCount: 
 
         # not gonna check, left it to user
         # if entry.guid in oldEntrys.keys():
-        #     assert entry.crc == oldEntrys[entry.guid].crc
+        #     assert entry.soundId == oldEntrys[entry.guid].soundId
         #     assert entry.name == oldEntrys[entry.guid].name
         #     if isVersionEntryByHash(version):
         #         assert entry.hash == oldEntrys[entry.guid].hash
@@ -355,7 +355,7 @@ def buildmhriceJson(msg: REMSG.MSG) -> dict:
                 {
                     "name": entry.name,
                     "guid": str(entry.guid),
-                    "crc?": entry.crc,
+                    "soundId": entry.soundId,
                     "hash": entry.hash if REMSG.isVersionEntryByHash(msg.version) else 0xFFFFFFFF,
                     "attributes": list([{valueTypeEnum(attrh["valueType"]): entry.attributes[i]} for i, attrh in enumerate(msg.attributeHeaders)]),
                     "content": entry.langs,
@@ -410,7 +410,7 @@ def importJson(msgObj: REMSG.MSG, filename: str) -> REMSG.MSG:
         entry = REMSG.Entry(msg.version)  # create a new one.
         entry.buildEntry(
             guid=jEntry["guid"],
-            crc=jEntry["crc?"],
+            soundId=jEntry["soundId"],
             name=jEntry["name"],
             attributeValues=list([readAttributeFromStr(next(iter(attr.values())), msg.attributeHeaders[i]["valueType"]) for i, attr in enumerate(jEntry["attributes"])]),
             langs=list([helper.forceWindowsLineBreak(content) for content in jEntry["content"]]),
